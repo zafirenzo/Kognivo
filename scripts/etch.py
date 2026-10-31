@@ -174,6 +174,109 @@ def scene_magnifier(p):
     return D.min(1), D.argmin(1)
 
 
+def _stand(p):
+    return [cyl(p, np.array([0, 0.06, 0], F), 0.34, 0.06), cyl(p, np.array([0, 0.28, 0], F), 0.045, 0.18)]
+
+
+def scene_hourglass(p):
+    v = lambda *a: np.array(a, F)
+    glass = smin(cone_seg(p, v(0, 0.62, 0), v(0, 0.2, 0), 0.03, 0.27), cone_seg(p, v(0, 0.62, 0), v(0, 1.04, 0), 0.03, 0.27), 0.04)
+    sand = np.maximum(cone_seg(p, v(0, 0.62, 0), v(0, 0.2, 0), 0.02, 0.25), p[:, 1] - 0.34)
+    parts = [glass, sand, cyl(p, v(0, 0.12, 0), 0.38, 0.06), cyl(p, v(0, 1.12, 0), 0.38, 0.06)]
+    for a in (0, 120, 240):
+        r = np.radians(a)
+        parts.append(capsule(p, v(0.31 * np.cos(r), 0.16, 0.31 * np.sin(r)), v(0.31 * np.cos(r), 1.08, 0.31 * np.sin(r)), 0.026))
+    D = np.stack(parts, 1)
+    return D.min(1), D.argmin(1)
+
+
+def scene_metronome(p):
+    x, y, z = p[:, 0], p[:, 1], p[:, 2]
+    k = np.cos(np.radians(10))
+    body = np.maximum.reduce([np.abs(x) * k + y * np.sin(np.radians(10)) - 0.34 * k, np.abs(z) - 0.2, -y, y - 1.05])
+    face = np.maximum.reduce([np.abs(x) * k + y * np.sin(np.radians(10)) - 0.22 * k, np.abs(z - 0.2) - 0.012, 0.15 - y, y - 0.95])
+    piv = np.array([0, 0.24, 0.23], F)
+    top = piv + np.array([0.26, 0.95, 0], F)
+    parts = [body, face, capsule(p, piv, top, 0.014), box(p, piv + (top - piv) * 0.62, (0.06, 0.05, 0.03), 0.01), cyl(p, np.array([0, 0.03, 0], F), 0.44, 0.03) if False else box(p, np.array([0, 0.02, 0], F), (0.42, 0.02, 0.26), 0.01)]
+    D = np.stack(parts, 1)
+    return D.min(1), D.argmin(1)
+
+
+def scene_padlock(p):
+    v = lambda *a: np.array(a, F)
+    body = box(p, v(0, 0.42, 0), (0.34, 0.3, 0.13), 0.06)
+    # the shackle is lifted and swung open: a half ring on two legs, one leg out of the body
+    c = v(0, 1.0, 0)
+    q = p - c
+    ring = np.hypot(np.hypot(q[:, 0], q[:, 1]) - 0.2, q[:, 2]) - 0.045
+    ring = np.maximum(ring, -q[:, 1])
+    legs = np.minimum(capsule(p, v(-0.2, 1.0, 0), v(-0.2, 0.62, 0), 0.045), capsule(p, v(0.2, 1.0, 0), v(0.2, 0.86, 0), 0.045))
+    hole = np.maximum(np.minimum(np.hypot(p[:, 0], p[:, 1] - 0.47) - 0.045, box(p, v(0, 0.37, 0), (0.018, 0.08, 0.5))), np.abs(p[:, 2] - 0.13) - 0.03)
+    parts = [np.maximum(body, -hole), np.minimum(ring, legs), box(p, v(0, 0.0, 0), (0.8, 0.004, 0.5), 0.002, rot('y', 10))]
+    D = np.stack(parts, 1)
+    return D.min(1), D.argmin(1)
+
+
+def scene_inkwell(p):
+    v = lambda *a: np.array(a, F)
+    bottle = smin(cyl(p, v(0, 0.17, 0), 0.3, 0.15), cyl(p, v(0, 0.4, 0), 0.12, 0.1), 0.1)
+    lip = torus(p, v(0, 0.5, 0), 0.12, 0.025, np.eye(3, dtype=F))
+    a, b = v(0.02, 0.42, 0.0), v(-0.42, 1.55, 0.12)
+    shaft = cone_seg(p, a, b, 0.008, 0.016)
+    d = (b - a) / np.linalg.norm(b - a)
+    vane = np.maximum(cone_seg(p, a + d * 0.35, b, 0.004, 0.11), np.abs((p - a) @ np.array([0.2, 0.05, 1], F) / np.linalg.norm([0.2, 0.05, 1])) - 0.012)
+    parts = [bottle, lip, shaft, vane, box(p, v(0.1, 0.0, 0.1), (0.75, 0.004, 0.5), 0.002, rot('y', -12))]
+    D = np.stack(parts, 1)
+    return D.min(1), D.argmin(1)
+
+
+def scene_macropad(p):
+    v = lambda *a: np.array(a, F)
+    tilt = rot('x', -7)
+    base = box(p, v(0, 0.1, 0), (0.78, 0.09, 0.46), 0.05, tilt)
+    keys = np.full(len(p), 9, F)
+    for i in range(3):
+        for j in range(2):
+            c = v(-0.5 + i * 0.36, 0.23 + j * 0.03, -0.15 + j * 0.3)
+            keys = np.minimum(keys, box(p, c, (0.14, 0.06, 0.12), 0.03, tilt))
+    knob = cyl(p, v(0.62, 0.3, 0.02), 0.11, 0.09)
+    grip = torus(p, v(0.62, 0.34, 0.02), 0.11, 0.02, np.eye(3, dtype=F))
+    cable = capsule(p, v(-0.78, 0.1, -0.2), v(-1.4, 0.03, -0.55), 0.03)
+    D = np.stack([base, keys, np.minimum(knob, grip), cable], 1)
+    return D.min(1), D.argmin(1)
+
+
+def scene_beacon(p):
+    v = lambda *a: np.array(a, F)
+    body = cyl(p, v(0, 0.45, 0), 0.24, 0.42)
+    cap = sphere(p, v(0, 0.86, 0), 0.24) if False else cone_seg(p, v(0, 0.87, 0), v(0, 1.0, 0), 0.24, 0.1)
+    vents = np.full(len(p), 9, F)
+    for y in (0.3, 0.42, 0.54):
+        vents = np.minimum(vents, torus(p, v(0, y, 0), 0.245, 0.016, np.eye(3, dtype=F)))
+    ant = capsule(p, v(0.08, 0.98, 0), v(0.08, 1.72, 0), 0.016)
+    tip = sphere(p, v(0.08, 1.74, 0), 0.04)
+    foot = cyl(p, v(0, 0.03, 0), 0.34, 0.03)
+    D = np.stack([body, cap, vents, np.minimum(ant, tip), foot], 1)
+    return D.min(1), D.argmin(1)
+
+
+def scene_orrery(p):
+    v = lambda *a: np.array(a, F)
+    c = v(0, 1.0, 0)
+    parts = [sphere(p, c, 0.15)]
+    arms = np.full(len(p), 9, F)
+    worlds = np.full(len(p), 9, F)
+    for ang, r, s, dy in ((30, 0.42, 0.06, -0.06), (150, 0.68, 0.09, -0.12), (260, 0.92, 0.075, -0.18)):
+        a = np.radians(ang)
+        end = c + v(r * np.cos(a), dy, r * np.sin(a))
+        arms = np.minimum(arms, capsule(p, c + v(0, dy, 0), end, 0.012))
+        arms = np.minimum(arms, capsule(p, end, end + v(0, 0.12, 0), 0.01))
+        worlds = np.minimum(worlds, sphere(p, end + v(0, 0.12 + s, 0), s))
+    parts += [arms, worlds, torus(p, c + v(0, -0.12, 0), 0.68, 0.006, np.eye(3, dtype=F)), capsule(p, v(0, 0.2, 0), c, 0.03)] + _stand(p)
+    D = np.stack(parts, 1)
+    return D.min(1), D.argmin(1)
+
+
 # Per-material line planes (world normals) and spacing; lines are slices by these plane families.
 HATCH = {
     'armillary': [((0, 1, 0.15), 30), ((1, 0.2, 0), 34), ((0.3, 1, 0.5), 30), ((0.6, 1, -0.3), 30), ((1, 0.6, 0), 34),
@@ -181,6 +284,13 @@ HATCH = {
     'cloth': [((0.25, 1, 0.1), 27)],
     'dividers': [((0, 1, 0.2), 30), ((0, 1, -0.2), 30), ((1, 0.3, 0), 30), ((0, 1, 0), 30), ((1, 1, 0), 30), ((1, 0, 0), 30), ((1, 0, 0.25), 80, 0.45)],
     'magnifier': [((1, 0.4, 0), 30), ((0.4, 1, 0), 95, 0.4), ((0, 1, 0.3), 30), ((1, 0.5, 0.2), 30), ((1, 0, 0.3), 80, 0.45)],
+    'hourglass': [((0, 1, 0.1), 70, 0.4), ((0, 1, 0), 34), ((0, 1, 0.2), 30), ((0.1, 1, 0), 30), ((1, 0.1, 0), 34), ((1, 0.1, 0.2), 34), ((1, 0.1, -0.2), 34)],
+    'metronome': [((1, 0.25, 0.2), 30), ((0, 1, 0.1), 46), ((1, 0.2, 0), 34), ((0, 1, 0.3), 34), ((0, 1, 0), 26)],
+    'padlock': [((0.15, 1, 0.3), 30), ((1, 0.3, 0.2), 32), ((1, 0, 0.25), 80, 0.45)],
+    'inkwell': [((0, 1, 0.15), 30), ((0, 1, 0), 30), ((1, 0.3, 0), 40), ((1, 0.6, 0.1), 60, 0.7), ((1, 0, 0.25), 80, 0.45)],
+    'macropad': [((0.1, 0.2, 1), 62), ((1, 0.3, 0.2), 32), ((0, 1, 0.1), 30), ((1, 0.2, 0), 30)],
+    'beacon': [((0, 1, 0.1), 28), ((0.3, 1, 0), 34), ((0, 1, 0), 30), ((1, 0.2, 0), 30), ((0, 1, 0), 26)],
+    'orrery': [((0, 1, 0.15), 30), ((1, 0.3, 0), 30), ((0, 1, 0.3), 28), ((1, 0, 0.3), 30), ((1, 0.2, 0), 30), ((0, 1, 0), 26), ((0, 1, 0), 30)],
 }
 
 
@@ -429,6 +539,13 @@ def main(only=None):
         'armillary': lambda: render('armillary', scene_armillary, seed=1),
         'dividers': lambda: render('dividers', scene_dividers, seed=3, cam=(0.6, 1.5, 3.2), look=(0, 0.75, 0)),
         'magnifier': lambda: render('magnifier', scene_magnifier, w=1500, h=1200, seed=5, cam=(0.2, 1.7, 2.9), look=(0, 0.7, 0), fov=0.55),
+        'hourglass': lambda: render('hourglass', scene_hourglass, seed=7, w=960, h=1200, cam=(0.25, 0.95, 2.55), look=(0, 0.6, 0)),
+        'metronome': lambda: render('metronome', scene_metronome, seed=8, w=960, h=1200, cam=(0.75, 0.95, 2.45), look=(0, 0.58, 0)),
+        'padlock': lambda: render('padlock', scene_padlock, seed=9, w=960, h=1200, cam=(0.4, 0.95, 2.55), look=(0, 0.6, 0)),
+        'inkwell': lambda: render('inkwell', scene_inkwell, seed=10, w=960, h=1200, cam=(0.35, 1.0, 2.8), look=(0, 0.72, 0)),
+        'macropad': lambda: render('macropad', scene_macropad, seed=13, w=960, h=1200, cam=(0.6, 1.9, 2.5), look=(0, 0.25, 0), fov=0.6),
+        'beacon': lambda: render('beacon', scene_beacon, seed=14, w=960, h=1200, cam=(0.25, 0.95, 2.75), look=(0, 0.82, 0)),
+        'orrery': lambda: render('orrery', scene_orrery, seed=15, w=960, h=1200, cam=(0.25, 1.4, 2.7), look=(0, 0.72, 0)),
         'door-left': lambda: door('door-left', seed=11),
         'door-right': lambda: door('door-right', seed=12, mirror=True),
     }

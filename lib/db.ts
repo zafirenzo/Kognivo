@@ -49,11 +49,13 @@ export async function attachGatewayOrder(id: string, gatewayOrderId: string) {
   if (error) throw error
 }
 
+export type OrderItem = { slug: string; name: string; option: string | null; qty: number; unit: number; kind: string; status: string }
+
 // Only what the confirmation page shows; the id is an unguessable uuid.
 export async function getOrderPublic(id: string) {
   if (!db || !/^[0-9a-f-]{36}$/.test(id)) return null
-  const { data } = await db.from('orders').select('id, instrument, kind, plan, status, amount_paise').eq('id', id).maybeSingle()
-  return data as null | { id: string; instrument: string; kind: 'plan' | 'preorder'; plan: string | null; status: string; amount_paise: number }
+  const { data } = await db.from('orders').select('id, items, status, amount_paise').eq('id', id).maybeSingle()
+  return data as null | { id: string; items: OrderItem[]; status: string; amount_paise: number }
 }
 
 // Idempotent: a webhook retry finds the order already paid and changes nothing.
@@ -63,10 +65,10 @@ export async function markPaid(gatewayOrderId: string, paymentId: string) {
     .update({ status: 'paid', gateway_payment_id: paymentId, paid_at: new Date().toISOString() })
     .eq('gateway_order_id', gatewayOrderId)
     .eq('status', 'created')
-    .select('id, instrument, kind, plan, email, buyer_name, amount_paise')
+    .select('id, items, email, buyer_name, amount_paise, shipping_paise')
     .maybeSingle()
   if (error) throw error
-  return data as null | { id: string; instrument: string; kind: 'plan' | 'preorder'; plan: string | null; email: string; buyer_name: string; amount_paise: number }
+  return data as null | { id: string; items: OrderItem[]; email: string; buyer_name: string; amount_paise: number; shipping_paise: number }
 }
 
 export async function markRefunded(paymentId: string) {

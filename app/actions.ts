@@ -1,11 +1,11 @@
 'use server'
 import { headers } from 'next/headers'
-import { addToWaitlist, addCommission, insertOrder, attachGatewayOrder, db } from '@/lib/db'
-import { getInstrument, PREORDER_PRICE } from '@/lib/catalogue'
+import { addToWaitlist, addCommission, insertOrder, attachGatewayOrder, db, type OrderItem } from '@/lib/db'
+import { getProduct, priceCart, buyable, physical, type Line } from '@/lib/catalogue'
 import { createGatewayOrder, paymentsReady, razorpayKeyId, checkoutSignatureOk } from '@/lib/razorpay'
 import { notifyCommission } from '@/lib/email'
 import { normEmail, normPhone } from '@/lib/validate'
-import { SELLER } from '@/lib/site'
+import { SELLER, isIndia, shippingFor } from '@/lib/site'
 
 export type FormState = { ok?: boolean; message?: string; error?: string; fields?: Record<string, string>; values?: Record<string, string> }
 
@@ -25,7 +25,7 @@ export async function joinWaitlist(_: FormState, fd: FormData): Promise<FormStat
   const email = normEmail(values.email)
   if (!email) return { values, error: 'Enter an email address, like name@company.com.' }
   if (await throttled('waitlist', 6000)) return { values, error: 'You just signed up. Wait a few seconds before trying again.' }
-  const instrument = getInstrument(String(fd.get('instrument') ?? ''))?.slug ?? 'omnireach'
+  const instrument = getProduct(String(fd.get('instrument') ?? ''))?.slug ?? 'omnireach'
   let res: 'ok' | 'duplicate'
   try {
     res = await addToWaitlist(email, instrument)
@@ -68,34 +68,56 @@ export type CheckoutResult =
   | { ok: true; orderId: string; gatewayOrderId: string; keyId: string; amount: number; prefill: { name: string; email: string; contact: string } }
   | { ok: false; error?: string; fields?: Record<string, string> }
 
-export async function createCheckout(fd: FormData): Promise<CheckoutResult> {
+export async function placeOrder(fd: FormData): Promise<CheckoutResult> {
   const get = (k: string) => String(fd.get(k) ?? '').trim()
-  const x = getInstrument(get('instrument'))
-  if (!x) return { ok: false, error: 'That instrument does not exist.' }
-  const plan = x.state === 'live' ? x.plans?.find((p) => p.id === get('plan')) : undefined
-  if (x.state === 'beta') return { ok: false, error: `${x.name} is in private beta. Join the waitlist on its page instead.` }
-  if (x.state === 'live' && !plan) return { ok: false, error: 'Choose a plan.' }
+  let lines: Line[] = []
+  try {
+    lines = JSON.parse(get('cart') || '[]')
+  } catch {}
+  const { rows, subtotal, hasPhysical } = priceCart(Array.isArray(lines) ? lines.slice(0, 30) : [])
+  if (!rows.length) return { ok: false, error: 'Your cart is empty.' }
+  const blocked = rows.filter((r) => !buyable(r.x) || r.x.sample)
+  if (blocked.length) {
+    return { ok: false, error: `Remove ${blocked.map((r) => r.x.name).join(', ')} from your cart: ${blocked.some((r) => r.x.sample) ? 'sample listings cannot be bought' : 'not on sale right now'}.` }
+  }
+  // ponytail: stock is the static number in lib/catalogue.ts; move it to the database when hardware sells in volume
+  const short = rows.find((r) => r.x.stock != null && r.qty > r.x.stock)
+  if (short) return { ok: false, error: `Only ${short.x.stock} ${short.x.name} left. Lower the quantity in your cart.` }
 
   const f: Record<string, string> = {}
   const name = get('buyer_name')
   if (name.length < 2) f.buyer_name = 'Enter your full name.'
   const email = normEmail(get('email'))
   if (!email) f.email = 'Enter an email address, like name@company.com.'
-  const phone = normPhone(get('phone'))
-  if (!phone) f.phone = 'Enter a 10-digit mobile number.'
+  const country = hasPhysical ? get('country') || 'India' : 'India'
+  const india = isIndia(country)
+  const rawPhone = get('phone')
+  const phone = india ? normPhone(rawPhone) : /^\+?[\d\s()-]{7,20}$/.test(rawPhone) ? rawPhone.replace(/[^\d+]/g, '') : null
+  if (!phone) f.phone = india ? 'Enter a 10-digit mobile number.' : 'Enter a phone number with its country code, like +44 20 7946 0958.'
+  let shipTo: Record<string, string> | null = null
+  if (hasPhysical) {
+    shipTo = { line: get('address'), city: get('city'), region: get('region'), postal: get('postal'), country }
+    if (shipTo.line.length < 6) f.address = 'Enter your house or building and street.'
+    if (!shipTo.city) f.city = 'Enter your city.'
+    if (india ? !/^[1-9]\d{5}$/.test(shipTo.postal) : shipTo.postal.length < 3) f.postal = india ? 'Enter a 6-digit PIN code.' : 'Enter your postal code.'
+    if (india && !shipTo.region) f.region = 'Enter your state.'
+  }
   if (fd.get('ack') !== 'on') f.ack = 'Tick the box to confirm you have read the terms.'
   if (Object.keys(f).length) return { ok: false, fields: f }
 
   if (!paymentsReady || !db) return { ok: false, error: 'Payments are not connected yet. Add the Razorpay and Supabase keys to the environment.' }
 
-  const amount = (plan ? plan.price : PREORDER_PRICE) * 100
+  const physicalSubtotal = rows.filter((r) => physical(r.x)).reduce((a, r) => a + r.total, 0)
+  const shipping = shippingFor(country, physicalSubtotal)
+  const amount = (subtotal + shipping) * 100
+  const items: OrderItem[] = rows.map((r) => ({ slug: r.x.slug, name: r.x.name, option: r.opt?.name ?? null, qty: r.qty, unit: r.unit, kind: r.x.kind, status: r.x.status }))
   const orderId = await insertOrder({
-    instrument: x.slug, kind: plan ? 'plan' : 'preorder', plan: plan?.id ?? null,
-    buyer_name: name, email, phone, company: get('org').slice(0, 120) || null, amount_paise: amount,
+    items, buyer_name: name, email, phone, company: get('org').slice(0, 120) || null, ship_to: shipTo,
+    subtotal_paise: subtotal * 100, shipping_paise: shipping * 100, amount_paise: amount,
   })
   const gatewayOrderId = await createGatewayOrder(amount, orderId.slice(0, 40))
   await attachGatewayOrder(orderId, gatewayOrderId)
-  return { ok: true, orderId, gatewayOrderId, keyId: razorpayKeyId!, amount, prefill: { name, email: email!, contact: `+91${phone}` } }
+  return { ok: true, orderId, gatewayOrderId, keyId: razorpayKeyId!, amount, prefill: { name, email: email!, contact: india ? `+91${phone}` : phone! } }
 }
 
 // The browser callback. Checked for tampering, but it never marks an order paid: only the webhook does.

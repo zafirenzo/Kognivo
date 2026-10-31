@@ -1,8 +1,8 @@
 import { webhookSignatureOk } from '@/lib/razorpay'
 import { markPaid, markRefunded } from '@/lib/db'
-import { getInstrument, plateTitle, rupees } from '@/lib/catalogue'
+import { rupees } from '@/lib/catalogue'
 import { sendReceipt } from '@/lib/email'
-import { PREORDER_RULE } from '@/lib/site'
+import { DELIVERY } from '@/lib/site'
 
 // Razorpay -> Settings -> Webhooks: point at /api/razorpay/webhook with events
 // payment.captured and refund.processed. This is the only place an order becomes paid.
@@ -16,16 +16,22 @@ export async function POST(req: Request) {
   if (evt.event === 'payment.captured') {
     const p = evt.payload.payment.entity as { id: string; order_id: string }
     const o = await markPaid(p.order_id, p.id)
-    const x = o && getInstrument(o.instrument)
-    if (o && x) {
-      const plan = x.plans?.find((pl) => pl.id === o.plan)
+    if (o) {
+      const kinds = new Set(o.items.map((i) => (i.status === 'soon' ? 'preorder' : i.kind)))
+      const next = [
+        (kinds.has('software') || kinds.has('project')) && DELIVERY.digital,
+        kinds.has('subscription') && DELIVERY.subscription,
+        kinds.has('hardware') && DELIVERY.hardware,
+        kinds.has('preorder') && DELIVERY.preorder,
+      ].filter(Boolean) as string[]
       await sendReceipt({
         to: o.email,
         name: o.buyer_name.split(' ')[0],
-        what: plan ? `${x.name}, ${plan.name} plan` : `Early access to ${plateTitle(x)}`,
-        amount: rupees(o.amount_paise / 100),
         orderId: o.id,
-        next: plan ? 'Your workspace is ready. Sign in with this email address.' : `${PREORDER_RULE.what} ${PREORDER_RULE.refund}`,
+        items: o.items.map((i) => ({ what: `${i.status === 'soon' ? 'Early access: ' : ''}${i.name}${i.option ? `, ${i.option}` : ''}${i.qty > 1 ? ` × ${i.qty}` : ''}`, amount: rupees(i.unit * i.qty) })),
+        shipping: o.shipping_paise ? rupees(o.shipping_paise / 100) : null,
+        total: rupees(o.amount_paise / 100),
+        next,
       })
     }
   }

@@ -19,22 +19,24 @@ create table commissions (
   created_at timestamptz not null default now()
 );
 
+-- One order per checkout. items is the priced cart as the server computed it:
+-- [{ slug, name, option, qty, unit, kind, status }], unit in rupees.
 create table orders (
   id uuid primary key default gen_random_uuid(),
-  instrument text not null,
-  kind text not null check (kind in ('plan', 'preorder')),
-  plan text,
+  items jsonb not null check (jsonb_typeof(items) = 'array' and jsonb_array_length(items) > 0),
   buyer_name text not null,
   email text not null,
   phone text not null,
   company text,
-  amount_paise integer not null check (amount_paise > 0),
+  ship_to jsonb, -- { line, city, region, postal, country } when the cart holds hardware
+  subtotal_paise integer not null check (subtotal_paise > 0),
+  shipping_paise integer not null default 0 check (shipping_paise >= 0),
+  amount_paise integer not null check (amount_paise = subtotal_paise + shipping_paise),
   gateway_order_id text unique,
   gateway_payment_id text,
-  status text not null default 'created' check (status in ('created', 'paid', 'refunded')),
+  status text not null default 'created' check (status in ('created', 'paid', 'shipped', 'refunded')),
   created_at timestamptz not null default now(),
-  paid_at timestamptz,
-  check (kind = 'preorder' or plan is not null)
+  paid_at timestamptz
 );
 
 alter table waitlist enable row level security;

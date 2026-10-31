@@ -1,20 +1,27 @@
 import type { Metadata } from 'next'
-import { PREORDER_RULE, SELLER } from '@/lib/site'
+import { DELIVERY, SELLER, SHIPPING } from '@/lib/site'
 import { rupees, PREORDER_PRICE } from '@/lib/catalogue'
 
-export const metadata: Metadata = { title: 'Terms and refunds' }
+export const metadata: Metadata = { title: 'Terms, shipping and refunds' }
 
 // TODO(founder): a lawyer should read this page before the first real sale.
 export default function Terms() {
   return (
     <section className="section">
       <article className="wrap narrow prose">
-        <h1 className="inst-title">Terms and refunds</h1>
+        <h1 className="inst-title">Terms, shipping and refunds</h1>
+        <h2>Prices</h2>
+        <p>All prices are in Indian rupees. Cards from outside India are charged in INR by your bank at its own rate.</p>
+        <h2>Software and projects</h2>
+        <p>{DELIVERY.digital} If it does not work for you, write to {SELLER.email} within 14 days of buying and we refund you in full.</p>
+        <h2>Subscriptions</h2>
+        <p>{DELIVERY.subscription} Your data can be exported or deleted at any time.</p>
+        <h2>Free and open-source tools</h2>
+        <p>Free downloads cost nothing and need no account. Open-source projects are released under the licence named on their page; you may use, change and share them under its terms.</p>
+        <h2>Hardware and shipping</h2>
+        <p>{DELIVERY.hardware} Shipping within India costs {rupees(SHIPPING.india)}, and is free on hardware orders of {rupees(SHIPPING.indiaFreeOver)} or more. International shipping costs {rupees(SHIPPING.international)}; any import duties are paid by the buyer. Return unused hardware within 14 days of delivery for a full refund of its price.</p>
         <h2>Early access</h2>
-        <p>Early access to an instrument in the lab costs {rupees(PREORDER_PRICE)}, paid once. {PREORDER_RULE.what}</p>
-        <p>{PREORDER_RULE.refund} You can also ask for a refund at any time before it opens, by writing to {SELLER.email}.</p>
-        <h2>Plans</h2>
-        <p>Plans are billed monthly in rupees, with a 14-day trial. Cancel before the next month begins and you are not charged again. Your workspace can be exported or deleted at any time.</p>
+        <p>Early access to an instrument still in development costs {rupees(PREORDER_PRICE)}, paid once. {DELIVERY.preorder} You can ask for a refund at any time before it opens.</p>
         <h2>Custom builds</h2>
         <p>Commissions are quoted in writing before any work starts. Nothing is billed until you accept the quote.</p>
         <h2>Payments</h2>

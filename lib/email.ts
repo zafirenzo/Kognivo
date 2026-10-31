@@ -23,19 +23,24 @@ const frame = (body: string) => `
     </div>
   </div>`
 
-export function sendReceipt(r: { to: string; name: string; what: string; amount: string; orderId: string; next: string }) {
+type Receipt = { to: string; name: string; orderId: string; items: { what: string; amount: string }[]; shipping: string | null; total: string; next: string[] }
+
+export function sendReceipt(r: Receipt) {
+  const row = (a: string, b: string, strong = false) =>
+    `<tr><td style="padding:6px 0;${strong ? 'font-weight:bold' : 'color:#5A4A4C'}">${esc(a)}</td><td style="text-align:right;${strong ? 'font-weight:bold' : ''}">${esc(b)}</td></tr>`
   return send(
     r.to,
-    `Receipt: ${r.what}`,
+    `Receipt for order ${r.orderId.slice(0, 8).toUpperCase()}`,
     frame(`
       <h1 style="font-weight:500;font-size:30px;line-height:38px;margin:0 0 16px">Thank you, ${esc(r.name)}.</h1>
-      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:26px">Your payment for <b>${esc(r.what)}</b> is confirmed.</p>
+      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:26px">Your payment is confirmed. Order ${esc(r.orderId.slice(0, 8).toUpperCase())}.</p>
       <table style="font-family:Arial,sans-serif;font-size:15px;line-height:24px;border-collapse:collapse;width:100%;margin:24px 0">
-        <tr><td style="padding:6px 0;color:#5A4A4C">Order</td><td style="text-align:right">${esc(r.orderId.slice(0, 8).toUpperCase())}</td></tr>
-        <tr><td style="padding:6px 0;color:#5A4A4C">Paid</td><td style="text-align:right">${esc(r.amount)}</td></tr>
+        ${r.items.map((i) => row(i.what, i.amount)).join('')}
+        ${r.shipping ? row('Shipping', r.shipping) : ''}
+        ${row('Paid', r.total, true)}
       </table>
-      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:26px">${esc(r.next)}</p>
-      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:26px"><a style="color:#7A1F24" href="${SITE_URL}/terms">Terms and refunds</a></p>`),
+      ${r.next.map((n) => `<p style="font-family:Arial,sans-serif;font-size:16px;line-height:26px">${esc(n)}</p>`).join('')}
+      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:26px"><a style="color:#7A1F24" href="${SITE_URL}/terms">Terms, shipping and refunds</a></p>`),
   )
 }
 

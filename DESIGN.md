@@ -1,6 +1,6 @@
 # Design
 
-A cabinet of instruments. Every app Kognivo makes is an instrument engraved on a copper plate, numbered Pl. I to Pl. IX. Instruments still in development stand under a draped cloth. Laid paper, oxblood-black etching ink, hairline rules. Light only: this is a print world.
+A shop of instruments. Everything Kognivo sells, software or hardware, is an instrument engraved on a copper plate, numbered Pl. I onward. Instruments still in development stand under a draped cloth. Laid paper, oxblood-black etching ink, hairline rules. Light only: this is a print world.
 
 | Token | Hex | Use |
 |---|---|---|
@@ -25,6 +25,7 @@ Every image is drawn by `scripts/etch.py` (numpy + Pillow, seeded, re-runnable: 
 |---|---|---|
 | `armillary.webp` | Pl. I, OmniReach: an armillary sphere on a turned stand | Hero cabinet, catalogue lead, OmniReach page |
 | `cloth-02` to `cloth-09.webp` | Pl. II to IX: eight different shapes under cloth | Catalogue, the lab gallery, lab pages |
+| `hourglass`, `metronome`, `inkwell`, `padlock`, `macropad`, `beacon`, `orrery.webp` | Sample products: software, subscription, free, open source, two hardware, project; also the shelf plates | Store, shelves, counter |
 | `magnifier.webp` | A reading glass over a letter | Evidence section |
 | `dividers.webp` | Drafting dividers on a sheet | Commission |
 | `door-left/right.webp` | Engraved cabinet doors: raised panel, wood grain, keyhole, hinges | Hero |
@@ -39,9 +40,9 @@ One authored moment per section, all honouring reduced motion (`components/motio
 |---|---|---|
 | `CabinetHero` | ScrollHero (pinned, window grows) | Pinned 2.1 screens: the cabinet doors swing open on their hinges, the interior shadow lifts, Pl. I settles. Phones: doors open once in view. Copy and form never move. |
 | `SplitText` | SplitText | Every section heading sets letter by letter. |
-| `DealIn` | DealIn | The nine plates are dealt out of the case into the grid. |
+| `DealIn` | DealIn | Shelves and store plates are dealt out of the case into the grid (offsets measured, any grid). |
 | `CitedLetter` | (new) | The signature: footnotes in a sample draft slide out their source slips. |
-| `StepIndex` | ScrollSpySequence | The plate's key follows the step in view. |
+| `StepIndex` | ScrollSpySequence | On OmniReach's page, the plate's key follows the step in view. |
 | `LabGallery` | HorizontalGallery | Pinned sideways walk past the eight covered plates; swipe row on phones. |
 | `InlinePlateHeadline` | InlineImageHeadline | A plate window opens between the words of "Have one made for you." |
 | `RisingWordmark` | RisingWordmark | KOGNIVO rises out of the footer floor. |

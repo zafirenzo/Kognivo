@@ -4,7 +4,7 @@ import { CommissionForm } from '@/components/Forms'
 
 export const metadata: Metadata = {
   title: 'Commission a build',
-  description: 'Custom software for companies, schools and founders: tools, automations and apps, built by Kognivo.',
+  description: 'Custom software and hardware for companies, schools and founders, built by Kognivo.',
 }
 
 const HOW = [
@@ -19,7 +19,7 @@ export default function Commission() {
       <div className="wrap commission-page">
         <div>
           <SplitText as="h1" text="Commission a build." className="inst-title" />
-          <p className="lede">Tell us what you need made. We build tools, automations and apps for companies, schools and founders.</p>
+          <p className="lede">Tell us what you need made. We build tools, automations, apps and devices for companies, schools and founders.</p>
           <img src="/plates/dividers.webp" alt="Engraving of a pair of drafting dividers standing on a sheet of paper." width={1200} height={1500} className="commission-plate" loading="lazy" />
           <ol className="how-list">
             {HOW.map((h) => (

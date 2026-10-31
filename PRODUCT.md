@@ -20,9 +20,9 @@ Arrival is mostly from Instagram, WhatsApp, LinkedIn and direct links, often on 
 
 ## Product Purpose
 
-Kognivo is a software agency and app house. It sells its own apps (licences and plans), takes early-access pre-orders for apps still in development, and takes commissions for custom builds. The site is its storefront and its proof that the apps are real.
+Kognivo is a software and hardware house with its own store. It sells software bought once, subscriptions, free downloads and open-source projects, hardware it builds and ships (India and abroad), and some of its own projects as bundles; it takes early-access pre-orders for apps still in development, and commissions for custom builds. One cart holds everything; Razorpay takes payment in INR.
 
-Success: OmniReach private-beta sign-ups, paid early-access pre-orders for lab apps, and qualified custom-build enquiries.
+Success: sales across the shelves, OmniReach private-beta sign-ups, paid early-access pre-orders, and qualified custom-build enquiries.
 
 ## Positioning
 
@@ -30,9 +30,10 @@ Kognivo builds software that shows its work. OmniReach researches each lead, kee
 
 ## Operating Context
 
-- Catalogue of nine apps: two named (OmniReach, Kyoris) and seven in development.
-- Each app has a state: **beta** (waitlist, optional founding pre-order), **lab** (early-access pre-order), **live** (buy a plan). The state flips as an app ships.
-- Payments in INR through Razorpay; plans billed monthly.
+- Shelves: software, subscriptions, free, open source, hardware, projects, coming soon. Every product is in `lib/catalogue.ts` with a kind and a status (available, beta, soon).
+- Real products today: OmniReach (beta), Nº II for debaters and seven more in development (soon). Every other listing is a marked sample until the founder supplies the real list; samples are refused at checkout.
+- One cart for mixed orders; address asked only when hardware is in it; shipping flat rates for India and abroad (placeholders).
+- Payments in INR through Razorpay; subscriptions charge the first month and are renewed by an emailed link (manual, like OmniReach's UPI billing).
 - Custom builds start with an enquiry form, not a checkout.
 
 ## Capabilities and Constraints

@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { List, X } from '@phosphor-icons/react/dist/ssr'
 import { RisingWordmark } from './motion/RisingWordmark'
 import { SELLER } from '@/lib/site'
-import { STATE_LABEL, type State } from '@/lib/catalogue'
+import { KIND_LABEL, type Product } from '@/lib/catalogue'
+import { CartLink } from './Shop'
 
 export function Mark({ size = 26 }: { size?: number }) {
   // An armillary, reduced to three strokes.
@@ -17,8 +18,9 @@ export function Mark({ size = 26 }: { size?: number }) {
 }
 
 const LINKS = [
-  { href: '/#cabinet', label: 'Instruments' },
-  { href: '/#lab', label: 'The lab' },
+  { href: '/store', label: 'Store' },
+  { href: '/store?shelf=hardware', label: 'Hardware' },
+  { href: '/store?shelf=open-source', label: 'Open source' },
   { href: '/commission', label: 'Commission' },
 ]
 
@@ -35,7 +37,7 @@ export function Nav() {
             <Link key={l.href} href={l.href}>{l.label}</Link>
           ))}
         </nav>
-        <Link href="/#beta" className="btn small nav-cta">Join the beta</Link>
+        <CartLink />
         <button className="nav-menu" popoverTarget="menu" aria-label="Open menu">
           <List size={24} aria-hidden />
         </button>
@@ -47,7 +49,7 @@ export function Nav() {
             {LINKS.map((l) => (
               <Link key={l.href} href={l.href}>{l.label}</Link>
             ))}
-            <Link href="/#beta">Join the beta</Link>
+            <Link href="/cart">Cart</Link>
           </nav>
         </div>
       </div>
@@ -61,11 +63,12 @@ export function Footer() {
       <div className="wrap footer-grid">
         <div>
           <p className="footer-brand"><Mark size={22} /> Kognivo</p>
-          <p className="footer-line">Software that shows its work. Made in {SELLER.city.split(',')[0]}.</p>
+          <p className="footer-line">Software, hardware and projects, made in {SELLER.city.split(',')[0]}.</p>
         </div>
         <nav aria-label="Footer" className="footer-links">
-          <Link href="/instruments/omnireach">OmniReach</Link>
-          <Link href="/#lab">The lab</Link>
+          <Link href="/store">Store</Link>
+          <Link href="/store/omnireach">OmniReach</Link>
+          <Link href="/store?shelf=soon">Coming soon</Link>
           <Link href="/commission">Commission</Link>
           <Link href="/terms">Terms and refunds</Link>
           <a href={`mailto:${SELLER.email}`}>{SELLER.email}</a>
@@ -76,6 +79,9 @@ export function Footer() {
   )
 }
 
-export function Stamp({ state }: { state: State }) {
-  return <span className={`stamp stamp-${state}`}>{STATE_LABEL[state]}</span>
+/** A rubber stamp in oxblood: what it is, or where it stands. */
+export function Stamp({ x }: { x: Product }) {
+  const [label, tone] =
+    x.status === 'soon' ? ['Coming soon', 'quiet'] : x.status === 'beta' ? ['Private beta', 'loud'] : x.stock === 0 ? ['Sold out', 'quiet'] : [KIND_LABEL[x.kind], 'loud']
+  return <span className={`stamp stamp-${tone}`}>{label}</span>
 }
