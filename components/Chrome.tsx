@@ -1,18 +1,16 @@
 import Link from 'next/link'
 import { List, X } from '@phosphor-icons/react/dist/ssr'
 import { RisingWordmark } from './motion/RisingWordmark'
-import { SELLER } from '@/lib/site'
-import { KIND_LABEL, type Product } from '@/lib/catalogue'
+import { SELLER, SHIPPING } from '@/lib/site'
+import { KIND_LABEL, rupees, type Product } from '@/lib/catalogue'
 import { CartLink } from './Shop'
 
-export function Mark({ size = 26 }: { size?: number }) {
-  // An armillary, reduced to three strokes.
+export function Mark({ size = 30 }: { size?: number }) {
+  // Two drums out of register: a pink disc under a blue ring.
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.4">
-      <circle cx="16" cy="16" r="12.5" />
-      <ellipse cx="16" cy="16" rx="12.5" ry="4.6" transform="rotate(-23 16 16)" />
-      <path d="M16 2.5v27" />
-      <circle cx="16" cy="16" r="2.6" fill="currentColor" stroke="none" />
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="mark">
+      <circle cx="14" cy="17" r="11" fill="var(--pink)" style={{ mixBlendMode: 'multiply' }} />
+      <circle cx="18" cy="14" r="9.5" fill="none" stroke="var(--blue)" strokeWidth="4" style={{ mixBlendMode: 'multiply' }} />
     </svg>
   )
 }
@@ -26,6 +24,8 @@ const LINKS = [
 
 export function Nav() {
   return (
+    <>
+    <p className="notice">Fresh prints every week. Free shipping in India on hardware over {rupees(SHIPPING.indiaFreeOver)}.</p>
     <header className="nav">
       <div className="wrap nav-inner">
         <Link href="/" className="brand" aria-label="Kognivo, home">
@@ -54,6 +54,7 @@ export function Nav() {
         </div>
       </div>
     </header>
+    </>
   )
 }
 
@@ -62,8 +63,8 @@ export function Footer() {
     <footer className="footer">
       <div className="wrap footer-grid">
         <div>
-          <p className="footer-brand"><Mark size={22} /> Kognivo</p>
-          <p className="footer-line">Software, hardware and projects, made in {SELLER.city.split(',')[0]}.</p>
+          <p className="footer-brand"><Mark size={34} /> Kognivo</p>
+          <p className="footer-line">Software, hardware and projects, made by hand in {SELLER.city.split(',')[0]}.</p>
         </div>
         <nav aria-label="Footer" className="footer-links">
           <Link href="/store">Store</Link>
@@ -79,9 +80,13 @@ export function Footer() {
   )
 }
 
-/** A rubber stamp in oxblood: what it is, or where it stands. */
+/** Each shelf prints in its own ink. */
+export const TINT: Record<string, string> = { software: 'yellow', subscription: 'pink', free: 'teal', 'open-source': 'blue', hardware: 'orange', project: 'purple', soon: 'blue' }
+export const tintOf = (x: Product) => (x.status === 'soon' ? 'blue' : TINT[x.kind])
+
+/** A small printed label: what it is, or where it stands. */
 export function Stamp({ x }: { x: Product }) {
   const [label, tone] =
-    x.status === 'soon' ? ['Coming soon', 'quiet'] : x.status === 'beta' ? ['Private beta', 'loud'] : x.stock === 0 ? ['Sold out', 'quiet'] : [KIND_LABEL[x.kind], 'loud']
+    x.status === 'soon' ? ['Coming soon', 'blue'] : x.status === 'beta' ? ['Private beta', 'pink'] : x.stock === 0 ? ['Sold out', 'ink'] : [KIND_LABEL[x.kind], tintOf(x)]
   return <span className={`stamp stamp-${tone}`}>{label}</span>
 }

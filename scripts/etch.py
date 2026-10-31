@@ -295,9 +295,8 @@ HATCH = {
 
 
 # ---------- renderer ----------
-def render(name, scene, w=1200, h=1500, seed=1, cam=(0.0, 1.05, 3.4), look=(0, 0.82, 0), fov=0.62, light=(-0.55, 0.72, 0.5), plate_margin=0.06):
-    rng = np.random.default_rng(seed)
-    hatch = HATCH.get(name.split('-')[0], HATCH['cloth'])
+def march(scene, w, h, cam, look, fov, light):
+    """Ray-march a scene: shading darkness, object and floor masks, hit points and material ids, per pixel."""
     cam, look = np.array(cam, F), np.array(look, F)
     fw = look - cam
     fw /= np.linalg.norm(fw)
@@ -373,6 +372,14 @@ def render(name, scene, w=1200, h=1500, seed=1, cam=(0.0, 1.05, 3.4), look=(0, 0
     hit2, floor2 = hit.reshape(h, w), floor.reshape(h, w)
     P2 = np.where(hit[:, None], P, np.where(floor[:, None], Pf, 0)).reshape(h, w, 3)
     mat2 = mat.reshape(h, w)
+    return dict(dark=dark, hit=hit2, floor=floor2, P=P2, mat=mat2, ys=ys, xs=xs, cam=cam, fw=fw)
+
+
+def render(name, scene, w=1200, h=1500, seed=1, cam=(0.0, 1.05, 3.4), look=(0, 0.82, 0), fov=0.62, light=(-0.55, 0.72, 0.5), plate_margin=0.06):
+    rng = np.random.default_rng(seed)
+    hatch = HATCH.get(name.split('-')[0], HATCH['cloth'])
+    m = march(scene, w, h, cam, look, fov, light)
+    dark, hit2, floor2, P2, mat2, ys, xs, cam, fw = (m[k] for k in ('dark', 'hit', 'floor', 'P', 'mat', 'ys', 'xs', 'cam', 'fw'))
 
     # hand: a slow wobble in every cut, and a burr that breaks the line now and then
     wob = (fbm(h, w, rng, cells=(220, 90)) - 0.5) * 0.35

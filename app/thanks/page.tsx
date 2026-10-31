@@ -12,7 +12,7 @@ export default async function Thanks({ searchParams }: { searchParams: Promise<{
   return (
     <section className="section">
       <div className="wrap narrow">
-        <h1 className="inst-title">{paid ? 'Thank you.' : 'Payment received.'}</h1>
+        <h1 className="page-title">{paid ? 'Thank you.' : 'Payment received.'}</h1>
         {o ? (
           <>
             <ul className="thanks-items">

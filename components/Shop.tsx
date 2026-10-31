@@ -122,7 +122,7 @@ export function CartView() {
             const id = lineId(r)
             return (
               <motion.li key={id} layout exit={{ opacity: 0, x: -24, transition: { duration: 0.3 } }} className="cart-row">
-                <Link href={`/store/${r.x.slug}`} className="cart-thumb"><img src={`/plates/${r.x.plate}.webp`} alt="" width={96} height={120} /></Link>
+                <Link href={`/store/${r.x.slug}`} className="cart-thumb"><img src={`/prints/${r.x.plate}.webp`} alt="" width={96} height={120} /></Link>
                 <div className="cart-what">
                   <span className="plate-no">{plateNo(r.x)}</span>
                   <Link href={`/store/${r.x.slug}`} className="cart-name">{r.x.status === 'soon' ? `Early access: ${r.x.name}` : r.x.name}</Link>
@@ -308,7 +308,7 @@ export function CheckoutView() {
         <ul>
           {rows.map((r) => (
             <li key={lineId(r)}>
-              <img src={`/plates/${r.x.plate}.webp`} alt="" width={56} height={70} />
+              <img src={`/prints/${r.x.plate}.webp`} alt="" width={56} height={70} />
               <span>
                 {r.x.status === 'soon' ? `Early access: ${r.x.name}` : r.x.name}
                 {r.opt && <small>{r.opt.name}{r.x.kind === 'subscription' ? ', monthly' : ''}</small>}

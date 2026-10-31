@@ -1,20 +1,19 @@
 import type { Metadata, Viewport } from 'next'
-import '@fontsource/cormorant-garamond/latin-500.css'
-import '@fontsource/cormorant-garamond/latin-600.css'
-import '@fontsource/cormorant-garamond/latin-500-italic.css'
-import '@fontsource-variable/instrument-sans/wght.css'
+import '@fontsource-variable/bricolage-grotesque/standard.css'
+import '@fontsource/dm-mono/latin-500.css'
+import '@fontsource/reenie-beanie/latin-400.css'
 import './globals.css'
 import { Nav, Footer } from '@/components/Chrome'
 import { SITE_URL } from '@/lib/site'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: 'Kognivo · Instruments for honest work', template: '%s · Kognivo' },
-  description: 'Kognivo is a small software house. OmniReach writes cold outreach from facts it can cite, and eight more instruments are on the bench.',
-  openGraph: { siteName: 'Kognivo', images: ['/plates/armillary.webp'] },
+  title: { default: 'Kognivo · Things we make', template: '%s · Kognivo' },
+  description: 'Software to buy once or by the month, free and open-source tools, hardware and projects, made by Kognivo in Raipur.',
+  openGraph: { siteName: 'Kognivo', images: ['/prints/armillary.webp'] },
 }
 
-export const viewport: Viewport = { themeColor: '#EDE7DA' }
+export const viewport: Viewport = { themeColor: '#F7F3EA' }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

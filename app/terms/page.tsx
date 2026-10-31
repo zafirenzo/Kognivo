@@ -9,7 +9,7 @@ export default function Terms() {
   return (
     <section className="section">
       <article className="wrap narrow prose">
-        <h1 className="inst-title">Terms, shipping and refunds</h1>
+        <h1 className="page-title">Terms, shipping and refunds</h1>
         <h2>Prices</h2>
         <p>All prices are in Indian rupees. Cards from outside India are charged in INR by your bank at its own rate.</p>
         <h2>Software and projects</h2>

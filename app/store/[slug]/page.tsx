@@ -4,18 +4,18 @@ import type { Metadata } from 'next'
 import { ArrowLeft, ArrowRight, ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 import { PRODUCTS, getProduct, plateNo, priceLabel, buyable, rupees, KIND_LABEL } from '@/lib/catalogue'
 import { DELIVERY } from '@/lib/site'
-import { SplitText } from '@/components/motion/SplitText'
+import { RisoText } from '@/components/Riso'
 import { StepIndex } from '@/components/motion/StepIndex'
 import { WaitlistForm } from '@/components/Forms'
 import { AddToCart } from '@/components/Shop'
-import { Stamp } from '@/components/Chrome'
+import { Stamp, tintOf } from '@/components/Chrome'
 
 export const generateStaticParams = () => PRODUCTS.map((x) => ({ slug: x.slug }))
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const x = getProduct((await params).slug)
   if (!x) return {}
-  return { title: x.name, description: x.line, openGraph: { images: [`/plates/${x.plate}.webp`] } }
+  return { title: x.name, description: x.line, openGraph: { images: [`/prints/${x.plate}.webp`] } }
 }
 
 const OMNI_STEPS = [
@@ -43,12 +43,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <section className="section inst">
         <div className="wrap inst-grid">
           <figure className="inst-plate">
-            <img src={`/plates/${x.plate}.webp`} alt={`Engraving: ${plateNo(x)}, ${x.name}.`} width={1200} height={1500} fetchPriority="high" />
-            <figcaption><b>{plateNo(x)}</b> {x.status === 'soon' ? 'Under cloth until it is ready.' : x.name}</figcaption>
+            <span className="poster tilt-1">
+              <img src={`/prints/${x.plate}.webp`} alt={`Riso print of ${x.name}.`} width={900} height={1125} fetchPriority="high" />
+              <span className={`sticker sticker-${tintOf(x)} big`}>{priceLabel(x).replace(' a month', '/mo').replace(' early access', '')}</span>
+            </span>
+            <figcaption>{x.status === 'soon' ? 'A one-ink proof. The full print comes when it ships.' : `${plateNo(x)}, printed in three inks.`}</figcaption>
           </figure>
           <div className="inst-copy">
             <Stamp x={x} />
-            <SplitText as="h1" text={x.name} className="inst-title" />
+            <RisoText as="h1" text={x.name} className="page-title" />
             <p className="lede">{x.line}</p>
             {x.sample && <p className="sample-banner">This is a sample listing, so it cannot be bought. Replace it in <code>lib/catalogue.ts</code>.</p>}
             <p className="price">{priceLabel(x)}</p>
@@ -118,7 +121,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {x.features && (
         <section className="section features">
           <div className="wrap">
-            <SplitText as="h2" text="What it does, exactly." className="h2" />
+            <RisoText text="What it does, exactly." className="h2" />
             <div className="feature-cols">
               {x.features.map((g) => (
                 <div key={g.group}>
@@ -134,7 +137,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {x.slug === 'omnireach' && (
         <section className="section">
           <div className="wrap">
-            <SplitText as="h2" text="From brief to sent, in the open." className="h2" />
+            <RisoText text="From brief to sent, in the open." className="h2" />
             <StepIndex steps={OMNI_STEPS} />
           </div>
         </section>
@@ -143,7 +146,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {x.options && x.kind === 'subscription' && x.status === 'beta' && (
         <section className="section plans">
           <div className="wrap">
-            <SplitText as="h2" text="Plans, when the beta ends." className="h2" />
+            <RisoText text="Plans, when the beta ends." className="h2" />
             <p className="lede">Monthly, in rupees, with a 14-day trial. Beta members keep their seat when plans open. Prices may change before launch.</p>
             <div className="ledger">
               {x.options.map((p) => (

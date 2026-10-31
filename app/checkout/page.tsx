@@ -7,7 +7,7 @@ export default function CheckoutPage() {
   return (
     <section className="section">
       <div className="wrap">
-        <h1 className="inst-title cart-title">Checkout.</h1>
+        <h1 className="page-title cart-title">Checkout.</h1>
         <CheckoutView />
       </div>
     </section>

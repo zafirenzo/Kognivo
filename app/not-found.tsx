@@ -4,9 +4,9 @@ export default function NotFound() {
   return (
     <section className="section">
       <div className="wrap narrow">
-        <h1 className="inst-title">This drawer is empty.</h1>
-        <p className="lede">The page you were looking for is not in the cabinet.</p>
-        <Link href="/" className="link">Back to the cabinet</Link>
+        <h1 className="page-title">Nothing printed here.</h1>
+        <p className="lede">This page was never printed, or it sold out.</p>
+        <Link href="/" className="link">Back to the shop</Link>
       </div>
     </section>
   )

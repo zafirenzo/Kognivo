@@ -1,48 +1,43 @@
 # Design
 
-A shop of instruments. Everything Kognivo sells, software or hardware, is an instrument engraved on a copper plate, numbered Pl. I onward. Instruments still in development stand under a draped cloth. Laid paper, oxblood-black etching ink, hairline rules. Light only: this is a print world.
+A riso print shop. Every product is a poster printed in two or three fluorescent soy inks on uncoated paper: halftoned, a few pixels out of register, speckled where the drum ran dry, taped to the wall with a price sticker. Headings are printed the same way: the words twice, in blue and pink, multiplied, drifting in and out of register as you scroll. Notes are written in pen. Loud, young, made by hand.
 
 | Token | Hex | Use |
 |---|---|---|
-| Paper | #EDE7DA | page ground |
-| Paper hi | #F5F1E8 | inputs, the sample letter |
-| Plate | #E3DBCA | toned sections (evidence, plans), plate backing |
-| Ink | #1F1416 | text, rules, the cabinet frame |
-| Ink 2 | #5A4A4C | secondary text (7:1 on paper) |
-| Oxblood | #7A1F24 | the one accent: buttons, links, plate numbers, stamps, focus |
+| Paper | #F7F3EA | page ground, also the paper of every print |
+| Paper hi | #FFFDF7 | inputs, cards, the sample letter |
+| Paper pink | #FDE4F0 | the OmniReach section's stock |
+| Ink | #16163A | text, borders (2px), the notice bar |
+| Ink 2 | #4B4B6B | secondary text |
+| Pink | #FF48B0 | buttons, second drum on headings, cart count |
+| Blue | #0078BF | headings, pen notes, misregistered button shadow, footer stock |
+| Yellow | #FFE800 | tape, stickers, ticker, commission stock, highlighter |
+| Orange, Teal, Purple | #FF6C2F, #00838A, #765BA7 | shelf colours: hardware, free, projects |
 
-Type: Cormorant Garamond 500/600 (+ italic) for headings, plate numbers and captions, never below 15px. Instrument Sans for body and controls, 17/1.62. Mono only for source URLs. Self-hosted through @fontsource.
+Each shelf prints in its own ink (`TINT` in `components/Chrome.tsx`): software yellow, subscriptions pink, free teal, open source blue, hardware orange, projects purple, coming soon blue.
 
-Shape: all sharp, radius 0. The only round things are the footnote buttons in the sample letter.
+Type: Bricolage Grotesque Variable, 800 at width 75 to 82 for display, regular for body. DM Mono for labels, prices, stickers and form labels. Reenie Beanie for pen notes only, never for anything a visitor must read to act.
 
-State stamps (`.stamp`): a rubber stamp in oxblood, slightly rotated, with a noise mask so the ink breaks. Private beta in oxblood, In the lab in ink 2.
+Shape: sharp, 2px ink borders. Buttons are pink blocks with a blue misregistered shadow that presses in on click. Stickers are pills, rotated. Posters tilt a degree or two and straighten on hover.
 
 ## Imagery
 
-Every image is drawn by `scripts/etch.py` (numpy + Pillow, seeded, re-runnable: `npm run etch`). Each instrument is a signed-distance scene ray-marched in numpy; the shading only decides line weight. Lines are slices of the form by parallel planes, so they wrap it the way a burin does, with cross-hatching in the deep shadows, a hand wobble and burr, a ruled sky, a ruled floor pool with the cast shadow, laid paper and a plate mark.
+`scripts/riso.py` (`npm run prints`) prints every poster into `public/prints/`. It re-uses the signed-distance scenes in `scripts/etch.py`, ray-marches them for shading, then separates the shading into spot inks: a flat backdrop shape (sun, arch, half, rings, stripes, diamond) in one ink, the lit body as a 75 degree halftone in a second, shadows as a 15 degree halftone in a third, each drum shifted a few pixels, with patchy coverage and paper speckle. Inks multiply. Products still in development are one-ink proofs of a shape under cloth.
 
-| File | Plate | Use |
-|---|---|---|
-| `armillary.webp` | Pl. I, OmniReach: an armillary sphere on a turned stand | Hero cabinet, catalogue lead, OmniReach page |
-| `cloth-02` to `cloth-09.webp` | Pl. II to IX: eight different shapes under cloth | Catalogue, the lab gallery, lab pages |
-| `hourglass`, `metronome`, `inkwell`, `padlock`, `macropad`, `beacon`, `orrery.webp` | Sample products: software, subscription, free, open source, two hardware, project; also the shelf plates | Store, shelves, counter |
-| `magnifier.webp` | A reading glass over a letter | Evidence section |
-| `dividers.webp` | Drafting dividers on a sheet | Commission |
-| `door-left/right.webp` | Engraved cabinet doors: raised panel, wood grain, keyhole, hinges | Hero |
-
-When a lab instrument gets a name, give it its own scene in `etch.py` and swap the cloth.
+To add a product: write its scene in `etch.py`, add a line to `JOBS` in `riso.py`, run `npm run prints`.
 
 ## Motion
 
-One authored moment per section, all honouring reduced motion (`components/motion`, Motion for React). Patterns are the Zenith Youth Summit site's, re-dressed for this world.
+| Component | What it does |
+|---|---|
+| `RisoText` | Headings printed on two drums; the pink copy drifts out of register as the heading enters, settles near-aligned mid-screen, drifts again as it leaves. |
+| `PosterPile` | Hero: three prints lean on each other, follow the pointer at different depths, and fan apart as you scroll away. |
+| `Scribble` | Pen notes whose arrows draw themselves in. |
+| Ticker | One marquee: what is on sale today, on a tilted yellow band. Pauses on hover. |
+| `DealIn` | Shelf posters and proofs are dealt out of a pile into the grid. |
+| `LabGallery` | "Fresh off the drum": a pinned sideways walk past everything for sale; swipe row on phones. |
+| `CitedLetter` | OmniReach's sample email: footnotes slide out yellow sticky-note sources. |
+| `InlinePlateHeadline` | A pill window opens between the words of "Have one made for you." |
+| `RisingWordmark` | KOGNIVO rises out of the footer, pink on blue stock. |
 
-| Component | Zenith pattern | Here |
-|---|---|---|
-| `CabinetHero` | ScrollHero (pinned, window grows) | Pinned 2.1 screens: the cabinet doors swing open on their hinges, the interior shadow lifts, Pl. I settles. Phones: doors open once in view. Copy and form never move. |
-| `SplitText` | SplitText | Every section heading sets letter by letter. |
-| `DealIn` | DealIn | Shelves and store plates are dealt out of the case into the grid (offsets measured, any grid). |
-| `CitedLetter` | (new) | The signature: footnotes in a sample draft slide out their source slips. |
-| `StepIndex` | ScrollSpySequence | On OmniReach's page, the plate's key follows the step in view. |
-| `LabGallery` | HorizontalGallery | Pinned sideways walk past the eight covered plates; swipe row on phones. |
-| `InlinePlateHeadline` | InlineImageHeadline | A plate window opens between the words of "Have one made for you." |
-| `RisingWordmark` | RisingWordmark | KOGNIVO rises out of the footer floor. |
+All of it collapses to still under reduced motion.

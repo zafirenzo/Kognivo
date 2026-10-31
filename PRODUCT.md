@@ -46,7 +46,7 @@ Kognivo builds software that shows its work. OmniReach researches each lead, kee
 
 ## Brand Commitments
 
-- Visual brief from the founder (binding): the design, graphics and art should be arty and human like the Kalaverio site (own generative paintings made in code, hairline numbered drawings, calm serif editorial); the animation and motion should be like the Zenith Youth Summit site (pinned scroll hero with expanding window, per-character split-text reveals, horizontal pinned gallery, dealt-in cards, scroll-spy sequence, rising footer wordmark).
+- Visual brief from the founder (binding): art made in code like the Kalaverio site, motion like the Zenith Youth Summit site, and above all alive: the engraved paper-and-ink version was rejected as a graveyard. Chosen world: a riso print shop (fluorescent inks, misregistration, stickers, tape, pen notes).
 - Kognivo is commercially separate: no Zafirenzo, Zenith or Kalaverio names, colours or seals on the site.
 - Voice: a software company that shows its work. Product, changelog, use cases.
 

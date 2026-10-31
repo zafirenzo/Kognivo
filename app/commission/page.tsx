@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { SplitText } from '@/components/motion/SplitText'
+import { RisoText } from '@/components/Riso'
 import { CommissionForm } from '@/components/Forms'
 
 export const metadata: Metadata = {
@@ -18,9 +18,9 @@ export default function Commission() {
     <section className="section">
       <div className="wrap commission-page">
         <div>
-          <SplitText as="h1" text="Commission a build." className="inst-title" />
+          <RisoText as="h1" text="Commission a build." className="page-title" />
           <p className="lede">Tell us what you need made. We build tools, automations, apps and devices for companies, schools and founders.</p>
-          <img src="/plates/dividers.webp" alt="Engraving of a pair of drafting dividers standing on a sheet of paper." width={1200} height={1500} className="commission-plate" loading="lazy" />
+          <span className="poster tilt-2 commission-plate"><img src="/prints/dividers.webp" alt="Riso print of a pair of drafting dividers on a sheet of paper." width={900} height={1125} loading="lazy" /></span>
           <ol className="how-list">
             {HOW.map((h) => (
               <li key={h.t}>

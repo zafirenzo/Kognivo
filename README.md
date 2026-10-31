@@ -7,7 +7,7 @@ npm install
 cp .env.example .env.local   # works without keys: forms keep rows in memory in development
 npm run dev                  # http://localhost:3000
 npm test                     # validation checks
-npm run etch                 # redraw every plate in public/plates (Python 3, numpy, Pillow)
+npm run prints               # reprint every riso poster in public/prints (Python 3, numpy, Pillow)
 ```
 
 ## Going live
@@ -20,6 +20,6 @@ npm run etch                 # redraw every plate in public/plates (Python 3, nu
 
 ## Adding products
 
-Everything lives in `lib/catalogue.ts`. Each product has a `kind` (software, subscription, free, open-source, hardware, project) and a `status` (available, beta, soon). Listings marked `sample: true` are placeholders and cannot be bought: replace them with real products. Give each new product a plate: add a scene to `scripts/etch.py`, or reuse one. Shipping rates and delivery promises are in `lib/site.ts`.
+Everything lives in `lib/catalogue.ts`. Each product has a `kind` (software, subscription, free, open-source, hardware, project) and a `status` (available, beta, soon). Listings marked `sample: true` are placeholders and cannot be bought: replace them with real products. Give each new product a poster: add a scene to `scripts/etch.py` and a line to `JOBS` in `scripts/riso.py`, or reuse one. Shipping rates and delivery promises are in `lib/site.ts`.
 
 Subscriptions charge the first month at checkout; renewals are by emailed link. Move to Razorpay Subscriptions when automatic renewal matters.

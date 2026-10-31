@@ -7,7 +7,7 @@ export default function CartPage() {
   return (
     <section className="section">
       <div className="wrap">
-        <h1 className="inst-title cart-title">Your cart.</h1>
+        <h1 className="page-title cart-title">Your cart.</h1>
         <CartView />
       </div>
     </section>

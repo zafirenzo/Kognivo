@@ -1,48 +1,26 @@
 import Link from 'next/link'
-import { buyable, plateNo, priceLabel, type Product } from '@/lib/catalogue'
-import { Stamp } from './Chrome'
+import { buyable, priceLabel, type Product } from '@/lib/catalogue'
+import { Stamp, tintOf } from './Chrome'
 import { QuickAdd } from './Shop'
 
-/** One plate in the store grid: the engraving, its number and name, what it costs, and the quickest action. */
-export function ProductCard({ x, eager = false }: { x: Product; eager?: boolean }) {
+/** One poster on the wall: the print, taped up, with its price sticker and the quickest action. */
+export function ProductCard({ x, eager = false, i = 0 }: { x: Product; eager?: boolean; i?: number }) {
   const quick = buyable(x) && !x.options && x.status === 'available'
   return (
-    <article className="product">
-      <Link href={`/store/${x.slug}`} className="plate-card">
-        <span className="plate-frame">
-          <img src={`/plates/${x.plate}.webp`} alt="" width={960} height={1200} loading={eager ? 'eager' : 'lazy'} decoding="async" />
-        </span>
-        <span className="plate-cap">
-          <span className="plate-no">{plateNo(x)}</span>
-          <span className="plate-name">{x.name}</span>
-          <Stamp x={x} />
-        </span>
+    <article className={`product tilt-${i % 4}`}>
+      <Link href={`/store/${x.slug}`} className="poster">
+        <img src={`/prints/${x.plate}.webp`} alt={`Riso print of ${x.name}`} width={900} height={1125} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+        <span className={`sticker sticker-${tintOf(x)}`}>{priceLabel(x).replace(' a month', '/mo').replace(' early access', '')}</span>
+        {x.sample && <span className="sample-tag">sample</span>}
       </Link>
+      <div className="product-cap">
+        <Link href={`/store/${x.slug}`} className="product-name">{x.name}</Link>
+        <Stamp x={x} />
+      </div>
       <p className="product-line">{x.line}</p>
       <div className="product-foot">
-        <span className="product-price">{priceLabel(x)}</span>
-        {quick ? <QuickAdd slug={x.slug} /> : <Link href={`/store/${x.slug}`} className="link">{x.href ? x.hrefLabel : x.status === 'beta' ? 'Join the beta' : 'View'}</Link>}
+        {quick ? <QuickAdd slug={x.slug} /> : <Link href={`/store/${x.slug}`} className="link">{x.href ? x.hrefLabel : x.status === 'beta' ? 'Join the beta' : x.status === 'soon' ? 'Reserve' : 'Choose'}</Link>}
       </div>
-      {x.sample && <span className="sample-note">Sample listing</span>}
     </article>
-  )
-}
-
-/** A catalogue ledger: one ruled row per product, for the counter on the home page. */
-export function Ledger({ items }: { items: Product[] }) {
-  return (
-    <ol className="ledger-rows">
-      {items.map((x) => (
-        <li key={x.slug}>
-          <Link href={`/store/${x.slug}`} className="ledger-thumb"><img src={`/plates/${x.plate}.webp`} alt="" width={96} height={120} loading="lazy" /></Link>
-          <span className="plate-no">{plateNo(x)}</span>
-          <Link href={`/store/${x.slug}`} className="ledger-name">{x.name}{x.sample && <small> sample</small>}</Link>
-          <span className="ledger-line">{x.line}</span>
-          <Stamp x={x} />
-          <span className="product-price">{priceLabel(x)}</span>
-          {buyable(x) && !x.options && x.status === 'available' ? <QuickAdd slug={x.slug} /> : <Link href={`/store/${x.slug}`} className="link">View</Link>}
-        </li>
-      ))}
-    </ol>
   )
 }

@@ -7,7 +7,7 @@ import { useMediaQuery, useReduced } from './hooks'
  * The bench, walked past sideways. Desktop: the section pins and vertical scroll pans the
  * covered plates across. Phones and reduced motion: a native swipe row with scroll-snap.
  */
-export function LabGallery({ heading, children }: { heading: ReactNode; children: ReactNode }) {
+export function LabGallery({ heading, children, id = 'lab' }: { heading: ReactNode; children: ReactNode; id?: string }) {
   const desktop = useMediaQuery('(min-width: 900px)')
   const reduce = useReduced()
   const pinned = desktop && !reduce
@@ -34,14 +34,14 @@ export function LabGallery({ heading, children }: { heading: ReactNode; children
 
   if (!pinned) {
     return (
-      <section id="lab" className="lab">
+      <section id={id} className="lab">
         <div className="wrap">{heading}</div>
         <div className="lab-row">{children}</div>
       </section>
     )
   }
   return (
-    <section id="lab" ref={ref} className="lab is-pinned" style={{ height: `calc(100vh + ${distance}px)` }}>
+    <section id={id} ref={ref} className="lab is-pinned" style={{ height: `calc(100vh + ${distance}px)` }}>
       <div className="lab-stage">
         <div className="wrap">{heading}</div>
         <motion.div ref={track} style={{ x }} className="lab-track">
