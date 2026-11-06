@@ -163,6 +163,12 @@ export const rupees = (n: number) => '₹' + n.toLocaleString('en-IN')
 
 export const plateNo = (x: Product) => `Pl. ${ROMAN[x.n] ?? x.n}`
 
+/** Every print of a product: the poster first, then the same thing from other angles in other inks. */
+export const prints = (x: Product) =>
+  x.status === 'soon' ? [`/prints/${x.plate}.webp`, `/prints/${x.plate}-1.webp`] : [0, 1, 2, 3].map((k) => `/prints/${x.plate}${k ? `-${k}` : ''}.webp`)
+
+export const widePrint = (x: Product) => `/prints/${x.plate}-wide.webp`
+
 /** Can it go in the cart? Free and open-source things are downloaded; beta things have a waitlist. */
 export const buyable = (x: Product) =>
   x.status === 'soon' || (x.status === 'available' && x.kind !== 'free' && x.kind !== 'open-source' && x.stock !== 0)

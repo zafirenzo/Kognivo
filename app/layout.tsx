@@ -5,6 +5,7 @@ import '@fontsource/reenie-beanie/latin-400.css'
 import './globals.css'
 import { Nav, Footer } from '@/components/Chrome'
 import { SITE_URL } from '@/lib/site'
+import { PageWipe } from '@/components/PageWipe'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <main id="main">{children}</main>
         <Footer />
+        <PageWipe />
       </body>
     </html>
   )

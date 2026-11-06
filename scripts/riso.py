@@ -141,6 +141,50 @@ JOBS = {
 }
 
 
+def orbit(cam, look, deg, zoom):
+    """The same camera swung around the instrument by `deg` and moved in by `zoom`."""
+    c, l = np.array(cam, F), np.array(look, F)
+    d = c - l
+    a = np.radians(deg)
+    x, z = d[0] * np.cos(a) - d[2] * np.sin(a), d[0] * np.sin(a) + d[2] * np.cos(a)
+    return tuple(l + np.array([x, d[1], z], F) * zoom), tuple(l)
+
+
+# Extra prints of each product for the floor and the reels: the same thing from new angles, in new inks.
+VARIANTS = [(-38, 0.86), (34, 0.78), (160, 0.95)]
+
+
+def variants(only=None):
+    for n, (sc, cam, look, fov, seed) in JOBS.items():
+        if n in ('dividers', 'magnifier') or (only and only != n):
+            continue
+        for k, (deg, zoom) in enumerate(VARIANTS, 1):
+            c, l = orbit(cam, look, deg, zoom)
+            poster(f'{n}-{k}', sc, c, l, fov, seed + 7 * k, shape=SHAPES[(seed + 2 * k) % len(SHAPES)])
+    for i, hs in enumerate(etch.hidden_sets()):
+        n = f'cloth-{i + 2:02d}'
+        if only and only != n:
+            continue
+        ink = ['pink', 'teal', 'blue', 'orange', 'purple', 'pink', 'blue', 'teal'][i]
+        c, l = orbit((0.0, 1.1, 3.0), (0, 0.65, 0), 40, 0.85)
+        poster(f'{n}-1', etch.make_cloth(hs, 40 + i), c, l, 0.62, 60 + i, inks=(ink, ink, ink), proof=True)
+
+
+def wides(only=None):
+    """A wide print of each product, for the top of its page."""
+    for n, (sc, cam, look, fov, seed) in JOBS.items():
+        if n in ('dividers', 'magnifier') or (only and only != n):
+            continue
+        c, l = orbit(cam, look, 18, 1.0)
+        poster(f'{n}-wide', sc, c, l, fov * 0.92, seed + 3, shape='half', w=1600, h=900)
+    for i, hs in enumerate(etch.hidden_sets()):
+        n = f'cloth-{i + 2:02d}'
+        if only and only != n:
+            continue
+        ink = ['blue', 'pink', 'teal', 'purple', 'blue', 'orange', 'pink', 'teal'][i]
+        poster(f'{n}-wide', etch.make_cloth(hs, 40 + i), (0.0, 1.1, 3.0), (0, 0.65, 0), 0.62, 80 + i, inks=(ink, ink, ink), proof=True, w=1600, h=900)
+
+
 def main(only=None):
     import os
     os.makedirs(OUT, exist_ok=True)
@@ -157,4 +201,10 @@ def main(only=None):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1] if len(sys.argv) > 1 else None)
+    args = sys.argv[1:]
+    if args[:1] == ['--variants']:
+        variants(args[1] if len(args) > 1 else None)
+    elif args[:1] == ['--wide']:
+        wides(args[1] if len(args) > 1 else None)
+    else:
+        main(args[0] if args else None)

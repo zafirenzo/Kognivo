@@ -28,16 +28,27 @@ To add a product: write its scene in `etch.py`, add a line to `JOBS` in `riso.py
 
 ## Motion
 
+The home page is one continuous scroll in three acts:
+
+1. **Opening** (`components/home/Opening.tsx`). A plaza of our instruments (obelisk, turning armillary, colonnade, domed hall) ray-marched live in a WebGL2 fragment shader and printed in two drums: pink light, blue 45 degree halftone shadow, out of register, with ink rain. Scroll flies the camera in; KOGNIVO's letters fly past it; then the pink floods the frame. No loader. A pointer-following yellow "Scroll down" badge. Reduced motion or no WebGL: a still riso print.
+2. **Creation** (`components/home/Creation.tsx`). Two hands, modelled and printed in code (`scripts/hands.py`), slide in over the pink and almost touch. A spark jumps the gap and opens into a four-pointed star (`public/star.svg`) that is a mask: through it is the shop floor. The hands pull apart and the star grows until the floor is all there is. `#floor` lands on the fully open floor.
+3. **The shop floor** (`components/home/Floor.tsx`, three.js). Every product is a pile of its prints lying on a ruled floor that bends away to the horizon and wraps, so it never ends. Drag to walk (with inertia), shelf chips walk you to a shelf and fade the rest, a newspaper masthead shows your position. Labels are real buttons. No WebGL: a flat grid of piles.
+
+Clicking a pile pulls the **machine** (`components/home/SlotMachine.tsx`): three reels of prints spin and stop one after another on that product, then its ticket prints out. The ticket is the way in.
+
+The **product page** follows an editorial case-study layout: the wide print uncovered on arrival and drifting slower than the page, a giant title with a scrambling mono status, an info grid (© / features / description / buy box), the other prints staggered down the page at different speeds with clip reveals, label-left text-right blocks, and the next product as a full-width coloured link. Moving between products (and from the ticket) runs `PageWipe`: a sheet of the product's ink with a curved edge sweeps up carrying its name.
+
+Elsewhere:
+
 | Component | What it does |
 |---|---|
-| `RisoText` | Headings printed on two drums; the pink copy drifts out of register as the heading enters, settles near-aligned mid-screen, drifts again as it leaves. |
-| `PosterPile` | Hero: three prints lean on each other, follow the pointer at different depths, and fan apart as you scroll away. |
+| `RisoText` | Headings printed on two drums; the pink copy drifts out of register as the heading enters and leaves. |
 | `Scribble` | Pen notes whose arrows draw themselves in. |
-| Ticker | One marquee: what is on sale today, on a tilted yellow band. Pauses on hover. |
-| `DealIn` | Shelf posters and proofs are dealt out of a pile into the grid. |
-| `LabGallery` | "Fresh off the drum": a pinned sideways walk past everything for sale; swipe row on phones. |
+| Ticker | What is on sale today, on a tilted yellow band. Pauses on hover. |
+| `DealIn` | Store posters are dealt out of a pile into the grid. |
 | `CitedLetter` | OmniReach's sample email: footnotes slide out yellow sticky-note sources. |
-| `InlinePlateHeadline` | A pill window opens between the words of "Have one made for you." |
 | `RisingWordmark` | KOGNIVO rises out of the footer, pink on blue stock. |
 
 All of it collapses to still under reduced motion.
+
+Prints per product: `{plate}.webp` (poster), `{plate}-1..3.webp` (turned left, right, behind; one proof for coming-soon), `{plate}-wide.webp` (16:9 cover). `python3 scripts/riso.py --variants` and `--wide` print them.
