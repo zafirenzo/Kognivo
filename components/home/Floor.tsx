@@ -9,7 +9,8 @@ import { useReduced } from '../motion/hooks'
 
 /**
  * The shop floor. Every product is a little pile of its prints lying on a ruled floor that bends away
- * toward the horizon. Drag to walk around it (it wraps, so it never ends); pick a shelf to be walked
+ * toward the horizon, like the top of a globe. Drag or scroll to travel (it wraps, so it never ends, all
+ * the way round); pinch to rise or sink; arrow keys work too; pick a shelf to be walked
  * to it; click a pile to pull the lever. Labels are real buttons, so the floor works by keyboard too.
  */
 
@@ -18,7 +19,7 @@ const COLS = 4
 const ROWS = Math.ceil(PRODUCTS.length / COLS)
 const PX = COLS * SPACING
 const PZ = ROWS * SPACING
-const CURVE = 0.0105
+const CURVE = 0.013
 const PAPER = new THREE.Color('#f7f3ea')
 
 // Where each pile sits in the world, with a little jitter so the floor doesn't read as a table.
@@ -64,7 +65,7 @@ void main(){
 
 type Pile = { group: THREE.Group; x: Product; spot: { x: number; z: number }; tiles: THREE.Mesh[]; hover: number; dim: number; label?: HTMLButtonElement | null }
 
-export function Floor({ active = true }: { active?: boolean }) {
+export function Floor() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const labels = useRef<(HTMLButtonElement | null)[]>([])
@@ -77,7 +78,7 @@ export function Floor({ active = true }: { active?: boolean }) {
 
   useEffect(() => {
     const host = wrapRef.current, canvas = canvasRef.current
-    if (!host || !canvas || !active) return
+    if (!host || !canvas) return
     let renderer: THREE.WebGLRenderer
     try {
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' })
@@ -211,6 +212,32 @@ export function Floor({ active = true }: { active?: boolean }) {
     host.addEventListener('pointerup', onUp)
     host.addEventListener('pointerleave', onLeave)
 
+    // scroll to travel (forward and back, sideways with shift or a sideways swipe), pinch to rise or sink
+    let camH = 10.5
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      if (e.ctrlKey) {
+        camH = Math.max(6, Math.min(18, camH + e.deltaY * 0.04))
+      } else {
+        const k = 0.0125 * (camH / 10.5)
+        goal.x += (e.shiftKey ? e.deltaY : e.deltaX) * k
+        if (!e.shiftKey) goal.z += e.deltaY * k
+      }
+      vel.set(0, 0)
+      lastInput = performance.now()
+      dirty = true
+    }
+    const onKey = (e: KeyboardEvent) => {
+      const step = { ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2] }[e.key]
+      if (!step) return
+      e.preventDefault()
+      goal.x += step[0]
+      goal.z += step[1]
+      lastInput = performance.now()
+    }
+    host.addEventListener('wheel', onWheel, { passive: false })
+    host.addEventListener('keydown', onKey)
+
     api.current = {
       goTo(s) {
         piles.forEach((p) => (p.dim = s && shelfOf(p.x) !== s ? 1 : 0))
@@ -236,6 +263,8 @@ export function Floor({ active = true }: { active?: boolean }) {
     let raf = 0
     let prev = performance.now()
     const v3 = new THREE.Vector3()
+    let camY = 10.5
+    const born = performance.now()
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame)
       const dt = Math.min((now - prev) / 1000, 0.05)
@@ -251,7 +280,8 @@ export function Floor({ active = true }: { active?: boolean }) {
       const before = target.x + target.z
       target.lerp(goal, reduce ? 1 : 0.12)
       const movedCam = Math.abs(target.x + target.z - before) > 1e-4
-      camera.position.set(target.x, 10.5, target.z + 8.5)
+      camY += (camH - camY) * 0.12
+      camera.position.set(target.x, camY, target.z + camY * 0.81)
       camera.lookAt(target.x, 0, target.z - 1.2)
       grid.position.set(Math.round(target.x), 0, Math.round(target.z))
       ;(grid.material as THREE.ShaderMaterial).uniforms.uC.value.set(target.x, target.z)
@@ -266,7 +296,9 @@ export function Floor({ active = true }: { active?: boolean }) {
         dirty = true
       }
 
-      let animating = movedCam || dirty
+      // arrival: the piles drop onto the floor, nearest first
+      const intro = reduce ? 1 : Math.min((now - born) / 1600, 1)
+      let animating = movedCam || dirty || intro < 1 || Math.abs(camH - camY) > 0.01
       piles.forEach((p, i) => {
         const px = wrap(p.spot.x, target.x, PX), pz = wrap(p.spot.z, target.z, PZ)
         const dx = px - target.x, dz = pz - target.z
@@ -274,14 +306,16 @@ export function Floor({ active = true }: { active?: boolean }) {
         p.hover += (want - p.hover) * 0.18
         if (Math.abs(want - p.hover) > 0.002) animating = true
         // the floor bends away: drop each pile by the curve and tilt it to match the slope
-        p.group.position.set(px, -CURVE * (dx * dx + dz * dz) + p.hover * 0.35, pz)
+        const land = Math.min(Math.max(intro * 1.7 - Math.hypot(dx, dz) / 40, 0), 1)
+        const drop = (1 - land) * (1 - land) * 6
+        p.group.position.set(px, -CURVE * (dx * dx + dz * dz) + p.hover * 0.35 + drop, pz)
         p.group.rotation.set(2 * CURVE * dz, 0, -2 * CURVE * dx)
         p.tiles.forEach((t, k) => {
           t.position.y = (t.userData.base as number) + p.hover * (0.18 + k * 0.1)
           const s = 1 + p.hover * 0.05
           t.scale.set(s, s, s)
           const m = t.material as THREE.MeshBasicMaterial
-          m.opacity = 1 - p.dim * 0.78
+          m.opacity = (1 - p.dim * 0.78) * land
         })
         // the label follows its pile on screen
         const el = labels.current[i]
@@ -289,7 +323,7 @@ export function Floor({ active = true }: { active?: boolean }) {
           v3.set(px, p.group.position.y, pz + 2.1).project(camera)
           const sx = (v3.x * 0.5 + 0.5) * w, sy = (-v3.y * 0.5 + 0.5) * h
           const far = Math.hypot(dx, dz)
-          const show = v3.z < 1 && far < 24 && p.dim < 0.5
+          const show = v3.z < 1 && far < 24 && p.dim < 0.5 && land > 0.9
           el.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, 0)`
           el.style.opacity = show ? String(Math.max(0, Math.min(1, (24 - far) / 8))) : '0'
           el.tabIndex = show ? 0 : -1
@@ -311,10 +345,12 @@ export function Floor({ active = true }: { active?: boolean }) {
       host.removeEventListener('pointermove', onMove)
       host.removeEventListener('pointerup', onUp)
       host.removeEventListener('pointerleave', onLeave)
+      host.removeEventListener('wheel', onWheel)
+      host.removeEventListener('keydown', onKey)
       texCache.forEach((t) => t.dispose())
       renderer.dispose()
     }
-  }, [active, reduce])
+  }, [reduce])
 
   const pick = (s: string | null) => {
     setShelf(s)
@@ -324,13 +360,13 @@ export function Floor({ active = true }: { active?: boolean }) {
   return (
     <div className="floor" id="floor-stage">
       <header className="masthead">
-        <div className="mh-cell mh-brand"><b>Kognivo</b> <i>the shop floor</i></div>
+        <h1 className="mh-cell mh-brand"><b>The Atlas</b> <i>of everything we make</i></h1>
         <div className="mh-cell">Software, hardware and projects</div>
         <div className="mh-cell mh-coords" aria-hidden>
           <span>position</span>
           <span ref={coords}>+0000.00  +0000.00</span>
         </div>
-        <div className="mh-cell mh-hint">Drag to walk around. Click a pile.</div>
+        <div className="mh-cell mh-hint">Drag to move. Scroll to travel. Click a pile.</div>
         <Link href="/commission" className="mh-cell mh-cta">Commission a build</Link>
       </header>
       <nav className="floor-shelves" aria-label="Walk to a shelf">
@@ -351,7 +387,7 @@ export function Floor({ active = true }: { active?: boolean }) {
           ))}
         </div>
       ) : (
-        <div ref={wrapRef} className="floor-world" style={{ touchAction: 'pan-y' }}>
+        <div ref={wrapRef} className="floor-world" tabIndex={0} aria-label="The Atlas. Use the arrow keys to move, or Tab to the product labels.">
           <canvas ref={canvasRef} aria-hidden />
           <div className="floor-labels">
             {PRODUCTS.map((x, i) => (

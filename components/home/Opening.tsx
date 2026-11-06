@@ -266,7 +266,7 @@ export function Opening() {
         <motion.div className="opening-intro" style={reduce ? undefined : { opacity: introOpacity, y: introY }}>
           <h1>Things we make.</h1>
           <p>Software, hardware and projects, printed in Raipur. Scroll to walk in.</p>
-          <a href="#floor" className="btn">Skip to the shop</a>
+          <a href="/atlas" className="btn">Skip to the Atlas</a>
         </motion.div>
         <motion.p className="opening-outro" style={reduce ? undefined : { opacity: outroOpacity }}>
           <span>Everything here was made by hand,</span>

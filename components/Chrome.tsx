@@ -16,6 +16,7 @@ export function Mark({ size = 30 }: { size?: number }) {
 }
 
 const LINKS = [
+  { href: '/atlas', label: 'Atlas' },
   { href: '/store', label: 'Store' },
   { href: '/store?shelf=hardware', label: 'Hardware' },
   { href: '/store?shelf=open-source', label: 'Open source' },
