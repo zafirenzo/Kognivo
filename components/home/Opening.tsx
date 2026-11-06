@@ -22,9 +22,9 @@ uniform float uT, uFlood, uDot, uRoll, uSpin;
 uniform vec3 uRo, uTa;
 // the letters: glyph cards standing in the scene, drawn from an atlas (r: the glyph, b: its keyline)
 uniform sampler2D uAtlas;
-uniform vec3 uLC[13], uLR[13], uLU[13];
-uniform vec4 uLRect[13];
-uniform float uLA[13];
+uniform vec3 uLC[14], uLR[14], uLU[14];
+uniform vec4 uLRect[14];
+uniform float uLA[14];
 
 const vec3 PINK = vec3(1.0, 0.56, 0.82);
 const vec3 BLUE = vec3(0.17, 0.33, 0.86);
@@ -143,7 +143,7 @@ void main(){
   // the letters, in the scene: the nearest glyph in front of the geometry wins, so buildings pass in
   // front of letters and letters in front of one another
   float lf = 0., le = 0., ls = 0., lt = 1e9, lop = 0.;
-  for (int i = 0; i < 13; i++) {
+  for (int i = 0; i < 14; i++) {
     if (uLA[i] <= 0.001) continue;
     vec3 R = uLR[i], U = uLU[i];
     vec3 n = normalize(cross(R, U));
@@ -223,11 +223,11 @@ function flight(t: number) {
 // Where the scroll is in the story: the flight, the armillary chapter, the flood.
 const FLIGHT_END = 0.6, CHAPTER_END = 0.83, FLOOD_END = 0.885
 
-// The name and the year, as glyph cards standing in the scene. KOGNIVO is set along the flight, each
+// The name, twice, as glyph cards standing in the scene. KOGNIVO is set along the flight, each
 // letter planted a little ahead of where the camera will be, upright to the camera as it passes, so the
-// letters arrive one after another, overlap, and get flown past. MMXXVI stands in an arc behind the
-// armillary, facing it, so the rings cross in front as the camera circles.
-const GLYPHS = [...'KOGNIVO'].map((ch) => ({ ch, group: 0 })).concat([...'MMXXVI'].map((ch) => ({ ch, group: 1 })))
+// letters arrive one after another, overlap, and get flown past. Then the whole name stands in an arc
+// behind the armillary, facing it, readable at a glance, with the rings crossing in front as the camera circles.
+const GLYPHS = [...'KOGNIVO'].map((ch) => ({ ch, group: 0 })).concat([...'KOGNIVO'].map((ch) => ({ ch, group: 1 })))
 type Card = { c: V3; r: V3; u: V3 }
 const norm = (v: V3): V3 => {
   const l = Math.hypot(...v) || 1
@@ -249,8 +249,8 @@ function placeCards(aspects: number[]): Card[] {
       return { c, r: r.map((v) => v * H * aspect) as V3, u: u.map((v) => v * H) as V3 }
     }
     const k = i - 7
-    const th = Math.PI - k * 0.36
-    const H = 2.4
+    const th = Math.PI - 0.3 + (3 - k) * 0.21 // centred on where the camera looks mid-chapter, narrow enough to read whole
+    const H = 1.45
     return {
       c: [Math.sin(th) * 7.5, 11.3, Math.cos(th) * 7.5],
       r: [-Math.cos(th) * H * aspect, 0, Math.sin(th) * H * aspect],
@@ -263,13 +263,13 @@ function placeCards(aspects: number[]): Card[] {
 // the inner half of the stroke, so blue is only the outside ring).
 async function buildAtlas() {
   const family = getComputedStyle(document.documentElement).getPropertyValue('--display').split(',')[0].trim() || 'sans-serif'
-  const size = 300, pad = 60, cellH = 420
+  const size = 300, pad = 34, cellH = 420
   try {
     await document.fonts.load(`800 ${size}px ${family}`)
   } catch {}
   const c = document.createElement('canvas')
   c.width = 2048
-  c.height = 1024
+  c.height = 2048 // three rows of glyphs; the last row was falling off the bottom at 1024
   const g = c.getContext('2d')!
   const setFont = () => {
     g.font = `800 ${size}px ${family}`
@@ -395,7 +395,7 @@ function useShader(canvas: React.RefObject<HTMLCanvasElement | null>, progress: 
       // the chapter: circle the armillary slowly, close enough that it fills the frame
       const ch = Math.min(Math.max((pr - FLIGHT_END) / (CHAPTER_END - FLIGHT_END), 0), 1)
       if (ch > 0) {
-        const a = -ch * 1.9
+        const a = -ch * 0.6
         ro = [Math.sin(a) * (4.4 - ch * 0.6), 12.5 + Math.sin(ch * 3.1) * 0.7, Math.cos(a) * (4.4 - ch * 0.6)]
         ta = [0, 11.8, 0]
       }
@@ -405,10 +405,10 @@ function useShader(canvas: React.RefObject<HTMLCanvasElement | null>, progress: 
       gl.uniform1f(uSpin, ch * 4)
       gl.uniform1f(uFlood, Math.max(0, Math.min(1, (pr - CHAPTER_END) / (FLOOD_END - CHAPTER_END - 0.01))))
       gl.uniform1f(uDot, small ? 3.2 : 4.2)
-      // the name stands in the plaza for the flight; the year behind the armillary for the chapter
+      // the name stands in the plaza for the flight, letter by letter; whole behind the armillary for the chapter
       const nameA = lettersReady ? Math.min(Math.max((pr - 0.035) / 0.03, 0), 1) * (1 - Math.min(Math.max((pr - 0.56) / 0.04, 0), 1)) : 0
-      const yearA = lettersReady ? Math.min(Math.max((pr - 0.6) / 0.03, 0), 1) * (1 - Math.min(Math.max((pr - 0.81) / 0.03, 0), 1)) : 0
-      GLYPHS.forEach((g, i) => (alphas[i] = g.group === 0 ? nameA : yearA))
+      const wholeA = lettersReady ? Math.min(Math.max((pr - 0.6) / 0.03, 0), 1) * (1 - Math.min(Math.max((pr - 0.81) / 0.03, 0), 1)) : 0
+      GLYPHS.forEach((g, i) => (alphas[i] = g.group === 0 ? nameA : wholeA))
       gl.uniform1fv(uLA, alphas)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
     }
@@ -436,7 +436,7 @@ export function Opening() {
   const fail = useRef(() => setFailed(true)).current
   useShader(canvas, progress, !reduce && !failed, fail)
 
-  // the chapter: two notes on paper while the year turns behind the armillary
+  // the chapter: two notes on paper while the name stands whole behind the armillary
   const noteA = useTransform(smooth, [0.62, 0.65, 0.71, 0.73], [0, 1, 1, 0])
   const noteAY = useTransform(smooth, [0.62, 0.73], [40, -40])
   const noteB = useTransform(smooth, [0.72, 0.75, 0.81, 0.83], [0, 1, 1, 0])
@@ -474,7 +474,7 @@ export function Opening() {
         {!reduce && (
           <>
             <motion.div className="opening-note opening-note-a" style={{ opacity: noteA, y: noteAY }}>
-              <p className="opening-note-kicker">Catalogue MMXXVI</p>
+              <p className="opening-note-kicker">What this is</p>
               <h2>Software, hardware, and the odd strange project.</h2>
               <p>Kognivo is a small studio in Raipur. Everything in this shop is ours: apps by the month or for keeps, tools that cost nothing, boards you can hold, and projects that fit nowhere else.</p>
             </motion.div>

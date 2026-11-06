@@ -459,7 +459,7 @@ a.poster:hover .sticker, .product:hover .sticker, .shelf:hover .sticker { transf
 .opening-canvas, .opening-still { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
 .opening-note { position: absolute; z-index: 2; width: min(420px, calc(100% - 2 * var(--gut))); background: var(--paper-hi); border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: clamp(18px, 2.2vw, 26px); pointer-events: none; }
 .opening-note-a { left: var(--gut); bottom: clamp(24px, 8vh, 80px); }
-.opening-note-b { right: var(--gut); top: clamp(24px, 8vh, 80px); }
+.opening-note-b { right: var(--gut); bottom: clamp(24px, 8vh, 80px); }
 .opening-note-kicker { margin: 0 0 10px; font: 500 12px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-2); }
 .opening-note h2 { margin: 0 0 10px; font-size: clamp(26px, 2.6vw, 38px); line-height: 0.98; letter-spacing: -0.02em; font-variation-settings: 'wdth' 78; color: var(--ink); text-wrap: balance; }
 .opening-note p:last-child { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); }
