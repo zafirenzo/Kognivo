@@ -20,6 +20,11 @@ out vec4 o;
 uniform vec2 uRes;
 uniform float uT, uFlood, uDot, uRoll, uSpin;
 uniform vec3 uRo, uTa;
+// the letters: glyph cards standing in the scene, drawn from an atlas (r: the glyph, b: its keyline)
+uniform sampler2D uAtlas;
+uniform vec3 uLC[13], uLR[13], uLU[13];
+uniform vec4 uLRect[13];
+uniform float uLA[13];
 
 const vec3 PINK = vec3(1.0, 0.56, 0.82);
 const vec3 BLUE = vec3(0.17, 0.33, 0.86);
@@ -135,6 +140,31 @@ void main(){
   }
   light += 0.1 * (1. - smoothstep(0.1, 0.9, length(uv)));    // a glow toward the middle, like the reference's light
 
+  // the letters, in the scene: the nearest glyph in front of the geometry wins, so buildings pass in
+  // front of letters and letters in front of one another
+  float lf = 0., le = 0., ls = 0., lt = 1e9, lop = 0.;
+  for (int i = 0; i < 13; i++) {
+    if (uLA[i] <= 0.001) continue;
+    vec3 R = uLR[i], U = uLU[i];
+    vec3 n = normalize(cross(R, U));
+    float den = dot(rd, n);
+    if (den > -1e-4) continue; // only the printed face, never the back of a card
+    float tp = dot(uLC[i] - ro, n) / den;
+    if (tp < 0.3 || tp > t || tp > lt) continue;
+    vec3 q = ro + rd * tp - uLC[i];
+    vec2 l = vec2(dot(q, R) / dot(R, R), dot(q, U) / dot(U, U));
+    // a little margin round the card so the misregistered shadow has somewhere to fall
+    if (abs(l.x) > 1. || abs(l.y) > 1.) continue;
+    vec4 rc = uLRect[i];
+    vec2 lo = rc.xy + 0.002, hi = rc.xy + rc.zw - 0.002; // never read a neighbour's ink
+    vec2 auv = clamp(rc.xy + (vec2(l.x, -l.y) * 0.5 + 0.5) * rc.zw, lo, hi);
+    vec4 a = texture(uAtlas, auv);
+    vec4 sh = texture(uAtlas, clamp(auv + vec2(-0.03, -0.035) * rc.zw, lo, hi));
+    if (a.r + a.b + sh.r < 0.02) continue;
+    lt = tp; lf = a.r; le = a.b; ls = sh.r * (1. - a.r);
+    lop = uLA[i] * mix(1., 0.5, smoothstep(14., 60., tp)) * smoothstep(0.18, 0.42, -den); // far letters thin into the air; edge-on cards vanish instead of leaving slivers
+  }
+
   // ink rain: long thin strokes, falling and slanted, banking with the camera
   vec2 ru = r2(-uRoll) * uv;
   vec2 rp = vec2(ru.x * 46. + ru.y * 4., ru.y * 2. + uT * 1.7);
@@ -155,6 +185,10 @@ void main(){
 
   vec3 col = PINK;
   col = mix(col, col * BLUE, blue);
+  // letters print last: a blue shadow out of register, the paper fill, an ink keyline
+  col = mix(col, BLUE * PINK, ls * lop * 0.9);
+  col = mix(col, vec3(1.0, 0.992, 0.968), lf * lop);
+  col = mix(col, vec3(0.086, 0.086, 0.227), le * lop);
   col = mix(col, vec3(1.0, 0.72, 0.88), uFlood);
   o = vec4(col, 1.);
 }`
@@ -188,6 +222,82 @@ function flight(t: number) {
 
 // Where the scroll is in the story: the flight, the armillary chapter, the flood.
 const FLIGHT_END = 0.6, CHAPTER_END = 0.83, FLOOD_END = 0.885
+
+// The name and the year, as glyph cards standing in the scene. KOGNIVO is set along the flight, each
+// letter planted a little ahead of where the camera will be, upright to the camera as it passes, so the
+// letters arrive one after another, overlap, and get flown past. MMXXVI stands in an arc behind the
+// armillary, facing it, so the rings cross in front as the camera circles.
+const GLYPHS = [...'KOGNIVO'].map((ch) => ({ ch, group: 0 })).concat([...'MMXXVI'].map((ch) => ({ ch, group: 1 })))
+type Card = { c: V3; r: V3; u: V3 }
+const norm = (v: V3): V3 => {
+  const l = Math.hypot(...v) || 1
+  return [v[0] / l, v[1] / l, v[2] / l]
+}
+const cross3 = (a: V3, b: V3): V3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+function placeCards(aspects: number[]): Card[] {
+  return GLYPHS.map((g, i) => {
+    const aspect = aspects[i]
+    if (g.group === 0) {
+      const ti = 0.09 + i * 0.105
+      const { ro, ta, roll } = flight(ti)
+      const f = norm([ta[0] - ro[0], ta[1] - ro[1], ta[2] - ro[2]])
+      const r0 = norm(cross3(f, [0, 1, 0])), u0 = cross3(r0, f)
+      const r = [0, 1, 2].map((n) => r0[n] * Math.cos(roll) + u0[n] * Math.sin(roll)) as V3
+      const u = cross3(r, f)
+      const D = 13, side = i % 2 ? 1.4 : -1.4, H = 4
+      const c = [0, 1, 2].map((n) => ro[n] + f[n] * D + r[n] * side + u[n] * 0.4) as V3
+      return { c, r: r.map((v) => v * H * aspect) as V3, u: u.map((v) => v * H) as V3 }
+    }
+    const k = i - 7
+    const th = Math.PI - k * 0.36
+    const H = 2.4
+    return {
+      c: [Math.sin(th) * 7.5, 11.3, Math.cos(th) * 7.5],
+      r: [-Math.cos(th) * H * aspect, 0, Math.sin(th) * H * aspect],
+      u: [0, H, 0],
+    }
+  })
+}
+
+// Draws every glyph into one atlas: the fill in red, an outer keyline in blue (the fill paints over
+// the inner half of the stroke, so blue is only the outside ring).
+async function buildAtlas() {
+  const family = getComputedStyle(document.documentElement).getPropertyValue('--display').split(',')[0].trim() || 'sans-serif'
+  const size = 300, pad = 60, cellH = 420
+  try {
+    await document.fonts.load(`800 ${size}px ${family}`)
+  } catch {}
+  const c = document.createElement('canvas')
+  c.width = 2048
+  c.height = 1024
+  const g = c.getContext('2d')!
+  const setFont = () => {
+    g.font = `800 ${size}px ${family}`
+    ;(g as CanvasRenderingContext2D & { fontStretch?: string }).fontStretch = 'condensed'
+  }
+  setFont()
+  g.fillStyle = '#000'
+  g.fillRect(0, 0, c.width, c.height)
+  let x = 0, y = 0
+  const rects: [number, number, number, number][] = []
+  const aspects: number[] = []
+  for (const { ch } of GLYPHS) {
+    const w = Math.ceil(g.measureText(ch).width) + pad * 2
+    if (x + w > c.width) ((x = 0), (y += cellH))
+    g.textBaseline = 'alphabetic'
+    g.lineJoin = 'round'
+    g.lineWidth = 16
+    g.strokeStyle = '#0000ff'
+    g.strokeText(ch, x + pad, y + cellH - 92)
+    g.fillStyle = '#ff0000'
+    g.fillText(ch, x + pad, y + cellH - 92)
+    rects.push([x / c.width, y / c.height, w / c.width, cellH / c.height])
+    aspects.push(w / cellH)
+    x += w
+  }
+  return { canvas: c, rects, aspects }
+}
+
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string) {
   const s = gl.createShader(type)!
@@ -223,6 +333,29 @@ function useShader(canvas: React.RefObject<HTMLCanvasElement | null>, progress: 
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
     const U = (n: string) => gl.getUniformLocation(prog, n)
     const uRes = U('uRes'), uT = U('uT'), uFlood = U('uFlood'), uDot = U('uDot'), uRo = U('uRo'), uTa = U('uTa'), uRoll = U('uRoll'), uSpin = U('uSpin')
+    const uLA = U('uLA')
+    const alphas = new Float32Array(GLYPHS.length)
+    let lettersReady = false
+    let dead = false
+    buildAtlas().then(({ canvas: atlas, rects, aspects }) => {
+      if (dead) return
+      const tex = gl.createTexture()
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D, tex)
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, atlas)
+      gl.generateMipmap(gl.TEXTURE_2D)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+      gl.uniform1i(U('uAtlas'), 0)
+      const cards = placeCards(aspects)
+      gl.uniform3fv(U('uLC'), new Float32Array(cards.flatMap((k) => k.c)))
+      gl.uniform3fv(U('uLR'), new Float32Array(cards.flatMap((k) => k.r)))
+      gl.uniform3fv(U('uLU'), new Float32Array(cards.flatMap((k) => k.u)))
+      gl.uniform4fv(U('uLRect'), new Float32Array(rects.flat()))
+      lettersReady = true
+    })
 
     // ponytail: fixed render scale per device class; add adaptive resolution if slow GPUs complain
     const small = window.matchMedia('(max-width: 899px)').matches
@@ -262,7 +395,7 @@ function useShader(canvas: React.RefObject<HTMLCanvasElement | null>, progress: 
       // the chapter: circle the armillary slowly, close enough that it fills the frame
       const ch = Math.min(Math.max((pr - FLIGHT_END) / (CHAPTER_END - FLIGHT_END), 0), 1)
       if (ch > 0) {
-        const a = ch * 1.9
+        const a = -ch * 1.9
         ro = [Math.sin(a) * (4.4 - ch * 0.6), 12.5 + Math.sin(ch * 3.1) * 0.7, Math.cos(a) * (4.4 - ch * 0.6)]
         ta = [0, 11.8, 0]
       }
@@ -272,10 +405,16 @@ function useShader(canvas: React.RefObject<HTMLCanvasElement | null>, progress: 
       gl.uniform1f(uSpin, ch * 4)
       gl.uniform1f(uFlood, Math.max(0, Math.min(1, (pr - CHAPTER_END) / (FLOOD_END - CHAPTER_END - 0.01))))
       gl.uniform1f(uDot, small ? 3.2 : 4.2)
+      // the name stands in the plaza for the flight; the year behind the armillary for the chapter
+      const nameA = lettersReady ? Math.min(Math.max((pr - 0.035) / 0.03, 0), 1) * (1 - Math.min(Math.max((pr - 0.56) / 0.04, 0), 1)) : 0
+      const yearA = lettersReady ? Math.min(Math.max((pr - 0.6) / 0.03, 0), 1) * (1 - Math.min(Math.max((pr - 0.81) / 0.03, 0), 1)) : 0
+      GLYPHS.forEach((g, i) => (alphas[i] = g.group === 0 ? nameA : yearA))
+      gl.uniform1fv(uLA, alphas)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
     }
     raf = requestAnimationFrame(frame)
     return () => {
+      dead = true
       cancelAnimationFrame(raf)
       removeEventListener('pointermove', onMove)
       io.disconnect()
@@ -283,9 +422,6 @@ function useShader(canvas: React.RefObject<HTMLCanvasElement | null>, progress: 
     }
   }, [canvas, progress, active, onFail])
 }
-
-const WORD = 'KOGNIVO'
-const NUMERALS = 'MMXXVI'
 
 export function Opening() {
   const ref = useRef<HTMLElement>(null)
@@ -300,12 +436,7 @@ export function Opening() {
   const fail = useRef(() => setFailed(true)).current
   useShader(canvas, progress, !reduce && !failed, fail)
 
-  // the name crosses the frame one giant letter at a time while the camera flies
-  const wordX = useTransform(smooth, [0.05, 0.56], ['100vw', '-100%'])
-  const wordOpacity = useTransform(smooth, [0.05, 0.08, 0.52, 0.56], [0, 1, 1, 0])
-  // the chapter: the year's numerals cross behind two notes on paper
-  const numX = useTransform(smooth, [0.58, 0.84], ['100vw', '-100%'])
-  const numOpacity = useTransform(smooth, [0.58, 0.61, 0.8, 0.84], [0, 1, 1, 0])
+  // the chapter: two notes on paper while the year turns behind the armillary
   const noteA = useTransform(smooth, [0.62, 0.65, 0.71, 0.73], [0, 1, 1, 0])
   const noteAY = useTransform(smooth, [0.62, 0.73], [40, -40])
   const noteB = useTransform(smooth, [0.72, 0.75, 0.81, 0.83], [0, 1, 1, 0])
@@ -342,14 +473,6 @@ export function Opening() {
         )}
         {!reduce && (
           <>
-            <motion.p className="opening-word" style={{ x: wordX, opacity: wordOpacity }} aria-hidden>
-              {[...WORD].map((ch, i) => (
-                <span key={i}>{ch}</span>
-              ))}
-            </motion.p>
-            <motion.p className="opening-word opening-numerals" style={{ x: numX, opacity: numOpacity }} aria-hidden>
-              {NUMERALS}
-            </motion.p>
             <motion.div className="opening-note opening-note-a" style={{ opacity: noteA, y: noteAY }}>
               <p className="opening-note-kicker">Catalogue MMXXVI</p>
               <h2>Software, hardware, and the odd strange project.</h2>

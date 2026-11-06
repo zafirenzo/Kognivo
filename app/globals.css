@@ -457,8 +457,6 @@ a.poster:hover .sticker, .product:hover .sticker, .shelf:hover .sticker { transf
 .opening { height: 1000vh; position: relative; background: #ffb8e0; }
 .opening-stage { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: hidden; isolation: isolate; }
 .opening-canvas, .opening-still { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-.opening-word { position: absolute; left: 0; top: 50%; translate: 0 -54%; margin: 0; display: flex; gap: 0.04em; white-space: nowrap; pointer-events: none; z-index: 1; font: 800 min(68vh, 44vw)/0.8 var(--display); font-variation-settings: 'wdth' 76; letter-spacing: -0.02em; color: var(--paper-hi); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0.05em 0.04em 0 var(--blue); will-change: transform; }
-.opening-numerals { font-size: min(46vh, 30vw); color: transparent; -webkit-text-stroke: 3px var(--paper-hi); text-shadow: none; opacity: 0.9; }
 .opening-note { position: absolute; z-index: 2; width: min(420px, calc(100% - 2 * var(--gut))); background: var(--paper-hi); border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: clamp(18px, 2.2vw, 26px); pointer-events: none; }
 .opening-note-a { left: var(--gut); bottom: clamp(24px, 8vh, 80px); }
 .opening-note-b { right: var(--gut); top: clamp(24px, 8vh, 80px); }
