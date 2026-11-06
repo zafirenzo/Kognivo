@@ -454,11 +454,17 @@ a.poster:hover .sticker, .product:hover .sticker, .shelf:hover .sticker { transf
 
 /* ---------- home: the opening fly-through ---------- */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.opening { height: 420vh; position: relative; background: #ffb8e0; }
-.opening-stage { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: hidden; perspective: 900px; isolation: isolate; }
+.opening { height: 1000vh; position: relative; background: #ffb8e0; }
+.opening-stage { position: sticky; top: var(--nav); height: calc(100svh - var(--nav)); overflow: hidden; isolation: isolate; }
 .opening-canvas, .opening-still { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-.opening-word { position: absolute; inset: 0; display: grid; place-items: center; transform-style: preserve-3d; pointer-events: none; }
-.opening-letter { grid-area: 1 / 1; font: 800 clamp(90px, 17vw, 300px)/0.8 var(--display); font-variation-settings: 'wdth' 76; color: var(--yellow); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 6px 6px 0 var(--ink); will-change: transform, opacity; }
+.opening-word { position: absolute; left: 0; top: 50%; translate: 0 -54%; margin: 0; display: flex; gap: 0.04em; white-space: nowrap; pointer-events: none; z-index: 1; font: 800 min(68vh, 44vw)/0.8 var(--display); font-variation-settings: 'wdth' 76; letter-spacing: -0.02em; color: var(--paper-hi); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0.05em 0.04em 0 var(--blue); will-change: transform; }
+.opening-numerals { font-size: min(46vh, 30vw); color: transparent; -webkit-text-stroke: 3px var(--paper-hi); text-shadow: none; opacity: 0.9; }
+.opening-note { position: absolute; z-index: 2; width: min(420px, calc(100% - 2 * var(--gut))); background: var(--paper-hi); border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: clamp(18px, 2.2vw, 26px); pointer-events: none; }
+.opening-note-a { left: var(--gut); bottom: clamp(24px, 8vh, 80px); }
+.opening-note-b { right: var(--gut); top: clamp(24px, 8vh, 80px); }
+.opening-note-kicker { margin: 0 0 10px; font: 500 12px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-2); }
+.opening-note h2 { margin: 0 0 10px; font-size: clamp(26px, 2.6vw, 38px); line-height: 0.98; letter-spacing: -0.02em; font-variation-settings: 'wdth' 78; color: var(--ink); text-wrap: balance; }
+.opening-note p:last-child { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink-2); }
 .opening-intro { position: absolute; left: var(--gut); bottom: clamp(28px, 7vh, 72px); max-width: 540px; z-index: 2; background: var(--paper-hi); border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: clamp(18px, 2.4vw, 28px); }
 .opening-intro h1 { font-size: clamp(54px, 8vw, 120px); line-height: 0.88; color: var(--ink); }
 .opening-intro p { margin: 14px 0 22px; font-size: 18px; max-width: 34ch; color: var(--ink-2); }
