@@ -269,7 +269,7 @@ export function Opening() {
           <a href="#floor" className="btn">Skip to the shop</a>
         </motion.div>
         <motion.p className="opening-outro" style={reduce ? undefined : { opacity: outroOpacity }}>
-          Everything here was made by hand,
+          <span>Everything here was made by hand,</span>
         </motion.p>
         {!reduce && (
           <div ref={badge} className="scroll-badge" aria-hidden>
