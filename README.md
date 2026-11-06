@@ -10,6 +10,18 @@ npm test                     # validation checks
 npm run prints               # reprint every riso poster in public/prints (Python 3, numpy, Pillow)
 ```
 
+## See it
+
+```bash
+./start.sh
+```
+
+Installs what it needs the first time, builds, starts the site and opens http://localhost:3000 in your browser. Ctrl+C stops it. Needs Node 20.9 or newer (`node -v`).
+
+The whole shop works without any keys: browsing, the shop floor, the machine, product pages and the cart. Checkout, the waitlist and the commission form need the keys in `.env.example`, copied into `.env.local`.
+
+While editing, `npm run dev` reloads on every save.
+
 ## Going live
 
 1. Create a Supabase project for Kognivo and run `supabase/migrations/001_init.sql`.
